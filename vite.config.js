@@ -19,7 +19,7 @@ export default defineConfig({
     port: 3004,
     proxy: {
       '/api': {
-        target: 'http://192.168.0.188:8080',
+        target: 'https://9341394f7f65.ngrok-free.app',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api/')
