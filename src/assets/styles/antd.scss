@@ -1,0 +1,329 @@
+@import "variable";
+// Table styles
+
+.custom-table-class {
+  max-height: calc(100vh - 220px) !important;
+  overflow-y: auto;
+
+  .ant-table-placeholder {
+    max-height: calc(100vh - 280px) !important;
+  }
+
+  .ant-table-thead .ant-table-cell {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 16.41px;
+    color: #1A1E3D;
+  }
+
+  .ant-table-tbody {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .ant-table-row .ant-table-cell {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 16.41px;
+    color: #1A1E3D;
+  }
+}
+
+// Dashboard styles
+.layout-container {
+
+  .ant-layout {
+    @apply bg-white;
+    height: 100vh;
+
+  }
+
+  .layout-main {
+    flex-grow: 1;
+    width: auto;
+  }
+
+  .ant-layout-sider {
+    padding-right: 0;
+    background: #f1f2f7 !important;
+  }
+
+  .ant-layout-header {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    background: #fff;
+    border-bottom: 1px solid #c8cbd9;
+  }
+
+  .ant-layout-content {
+    flex-grow: 1;
+    margin: 16px;
+    overflow-y: auto;
+  }
+}
+
+
+// Menu styles
+
+.sidebar-menu-component {
+
+  .ant-menu-root {
+    border-inline-end: none !important;
+  }
+
+  .ant-menu {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .ant-menu-light {
+    background: transparent !important;
+  }
+
+  .ant-menu-item {
+    width: 100%;
+    padding: 24px 20px !important;
+    margin: 4px 0 0 0;
+
+    svg {
+      font-size: 20px !important;
+      color: #535668 !important;
+    }
+
+    span {
+      color: #535668;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 17px;
+      margin-left: 12px !important;
+    }
+  }
+
+  .ant-menu-item-selected {
+    background: #c7ceff;
+
+    svg {
+      color: #5a6acf !important;
+    }
+
+    span {
+      color: #5a6acf;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 18px;
+    }
+  }
+}
+
+.user-info {
+  width: 350px;
+
+  .ant-menu-light {
+    background: transparent !important;
+  }
+
+  .ant-menu-item {
+    span {
+      font-size: 14px;
+    }
+  }
+
+  .active-menu {
+    background: white;
+  }
+
+  .ant-menu-vertical {
+    border-inline-end: none !important;
+  }
+}
+
+.app-modal {
+  .ant-modal-header {
+    margin-bottom: 20px;
+
+    .ant-modal-title {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 29.05px;
+    }
+  }
+
+  .ant-modal-content {
+    border-radius: 16px;
+  }
+
+  .ant-modal-body {
+    max-height: calc(100vh - 200px) !important;
+    border-radius: unset;
+
+    @apply rounded-2xl px-1
+  }
+
+  .ant-modal-close {
+    top: 10px;
+    inset-inline-end: 10px;
+    color: #000000;
+    background: #E5E5E5;
+    border-radius: 100%;
+    width: 24px;
+    height: 24px;
+
+    &:hover {
+      color: #000;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .ant-modal-close-x {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
+    }
+  }
+}
+
+// Notification customize
+.notification-custom-class {
+  width: 360px;
+  background: $body;
+  color: $white;
+
+  .ant-notification-notice-close {
+    display: none !important;
+  }
+
+  .ant-notification-notice-content > div {
+    display: grid;
+    grid-template-areas: 'message button' 'description button';
+    align-items: start;
+
+    .ant-notification-notice-message {
+      grid-area: message;
+      grid-column-start: 1;
+      grid-column-end: 3;
+      color: $white;
+      font-size: 16px;
+      line-height: 18px;
+      font-weight: 700;
+    }
+
+    .ant-notification-notice-description {
+      grid-area: description;
+      width: 200px;
+      padding-right: 8px;
+      color: $white;
+      font-size: 12px;
+      line-height: 14px;
+      font-weight: 500;
+    }
+
+
+    .ant-notification-notice-btn {
+      grid-area: button;
+      margin: 0;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+
+      button {
+        font-weight: 500;
+        border: none;
+        padding-right: 36px !important;
+        padding-left: 36px !important;
+        color: $body;
+      }
+    }
+  }
+}
+
+.notification-error {
+  background: $danger;
+}
+
+.notification-warning {
+  background: $warning;
+}
+
+.notification-success {
+  background: $success;
+}
+
+.notification-message {
+  background: #3B3F44;
+}
+
+.pagination {
+  .ant-pagination {
+
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      button {
+        color: $muted !important;
+        @apply flex items-center justify-center;
+      }
+
+      button:hover {
+        color: $primary !important;
+      }
+
+      @apply flex items-center justify-center
+
+    }
+
+    .ant-pagination-item {
+      border-color: $muted;
+      border-radius: 8px;
+
+      a {
+        color: $muted !important;
+      }
+    }
+
+    .ant-pagination-item-active {
+      border-color: $primary;
+      background-color: $primary;
+
+      a {
+        color: $white !important;
+      }
+    }
+
+    @apply flex justify-between items-center
+  }
+
+  .ant-select {
+
+    .ant-select-selector {
+      border-color: $muted !important;
+
+      .ant-select-selection-item {
+        @apply flex items-center
+      }
+
+      @apply h-8 #{!important};
+    }
+
+    @apply w-14 h-8
+  }
+}
+
+.description-custom-class {
+  .ant-descriptions-item-label {
+    @apply font-semibold
+  }
+
+  background-color: rgb($muted, 0.1);
+  @apply p-4 rounded-2xl
+}
+
+
+.ant-btn {
+  @apply flex items-center justify-between
+}
+
+.ant-popconfirm-buttons {
+  @apply flex justify-end
+}
+
+
