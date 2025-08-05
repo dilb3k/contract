@@ -1,31 +1,35 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import useValidation from '@/composables/validations.js'
 import useAuth from '@/store/auth.pinia.js'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
-import useCore from '@/store/core.pinia.js'
 
 const { t } = useI18n()
 const { requiredField } = useValidation()
 const authPinia = useAuth()
-const corePinia = useCore()
-const {loginLoader} = storeToRefs(authPinia)
-const router = useRouter()
+const { loginLoader } = storeToRefs(authPinia)
 
 const form = reactive({
-  username: null,
-  password: null,
+  username: '',
+  password: ''
 })
 
-function onFinish() {
-  authPinia.login(form)
+const formRef = ref()
+
+async function onFinish() {
+  try {
+    await formRef.value.validateFields()
+    await authPinia.login(form)
+  } catch (error) {
+    console.error('Form validation error:', error)
+  }
 }
 </script>
 
 <template>
   <a-form
+    ref="formRef"
     :model="form"
     layout="vertical"
     name="login-form"
@@ -41,8 +45,11 @@ function onFinish() {
         v-model:value="form.username"
         :placeholder="t('LoginView.loginPlaceholder')"
         size="large"
+        :disabled="loginLoader"
+        autocomplete="username"
       />
     </a-form-item>
+
     <a-form-item
       :label="t('LoginView.password')"
       name="password"
@@ -52,21 +59,26 @@ function onFinish() {
         v-model:value="form.password"
         :placeholder="t('LoginView.passwordPlaceholder')"
         size="large"
+        :disabled="loginLoader"
+        autocomplete="new-password"
       />
     </a-form-item>
 
-    <a-flex>
+    <a-flex justify="space-between" align="center">
       <a-button
         :loading="loginLoader"
         html-type="submit"
         type="primary"
+        size="large"
       >
         {{ t('LoginView.enter') }}
       </a-button>
     </a-flex>
-
   </a-form>
-
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.ant-form-item {
+  margin-bottom: 24px;
+}
+</style>

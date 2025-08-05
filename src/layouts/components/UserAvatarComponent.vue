@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import UserInfoComponent from '@/layouts/components/UserInfoComponent.vue'
 import IconUser from '@/components/icons/outline/IconUser.vue'
 import IconDown from '@/components/icons/solid/IconDown.vue'
-import useUser from '@/store/user.pinia.js'
+import {useUser} from '@/store/user.pinia.js'
 
 const { t } = useI18n()
 const userPinia = useUser()

@@ -2,87 +2,119 @@ import axios from 'axios'
 import { apiBaseUrl, apiVersion } from '@/utils/config/api.js'
 
 const instance = axios.create({
-  baseURL: `${apiBaseUrl}/${apiVersion}`
+  baseURL: `${apiBaseUrl}/${apiVersion}`,
+  headers: { 'ngrok-skip-browser-warning': '69420' },
+  timeout: 10000
 })
+
 const langObj = {
-  uz: 'uz_lat',
+  uz: 'uz',
   ru: 'ru',
-  en: 'en'
+  en: 'en',
 }
 
-export const api = ({ url, open = false, ...props }) => {
-  let lang = localStorage.getItem('lang')
+let isRefreshing = false
+let failedQueue = []
 
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+
+  failedQueue = []
+}
+
+export const api = ({ url, open = false, pk, ...props }) => {
+  const lang = localStorage.getItem('lang') || 'uz'
   const token = localStorage.getItem('access_token')
-  if (!open) {
+
+  if (!open && token) {
     props.headers = {
       Authorization: `Bearer ${token}`,
-      ...props.headers
+      ...props.headers,
     }
   }
-  if ('pk' in props && props.pk) {
-    url = `${url}/${props.pk}`
+
+  if (pk) {
+    url = `${url}/${pk}`
   }
+
   props.headers = {
     ...props.headers,
-    hl: langObj[lang] ?? langObj.uz
+    Hl: langObj[lang],
   }
-  return instance({
-    url: url,
-    ...props
-  })
+
+  return instance({ url, ...props })
 }
 
+const refreshAccessToken = async () => {
+  const refreshToken = localStorage.getItem('refresh_token')
 
-function createAxiosResponseInterceptor() {
-  const interceptor = instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response.status !== 401) {
-        return Promise.reject(error)
-      }
-      axios.interceptors.response.eject(interceptor)
-      return refreshAccessToken(error)
-    }
-  )
-}
+  if (!refreshToken) {
+    Clear()
+    return Promise.reject(new Error('No refresh token'))
+  }
 
-function refreshAccessToken(error) {
-  const refresh_token = localStorage.getItem('refresh_token')
-  if (refresh_token) {
-    return axios({
+  try {
+    const { data } = await axios({
       url: `${apiBaseUrl}/${apiVersion}/auth/refresh`,
       method: 'POST',
-      data: {
-        refreshToken: refresh_token
-      }
+      data: { refreshToken },
     })
-      .then(({ data }) => {
-        localStorage.setItem('access_token', data?.accessToken)
-        localStorage.setItem('refresh_token', data?.refreshToken)
-        return axios({
-          ...error.response.config,
-          headers: {
-            ...error.response.config.headers,
-            Authorization: `Bearer ${data?.accessToken}`
-          }
-        })
-      })
-      .catch((error2) => {
-        Clear()
-        return Promise.reject(error2)
-      })
-      .finally(createAxiosResponseInterceptor)
+
+    localStorage.setItem('access_token', data.accessToken)
+    localStorage.setItem('refresh_token', data.refreshToken)
+
+    return data.accessToken
+  } catch (error) {
+    Clear()
+    throw error
   }
-  Clear()
-  return Promise.reject('Error')
 }
 
-export function Clear() {
+export const Clear = () => {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
-  window.location.href = '/'
-  return null
+  window.location.href = '/auth/login'
 }
 
-createAxiosResponseInterceptor()
+instance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error)
+    }
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject })
+      }).then(token => {
+        originalRequest.headers.Authorization = `Bearer ${token}`
+        return instance(originalRequest)
+      }).catch(err => {
+        return Promise.reject(err)
+      })
+    }
+
+    originalRequest._retry = true
+    isRefreshing = true
+
+    try {
+      const newToken = await refreshAccessToken()
+      processQueue(null, newToken)
+      originalRequest.headers.Authorization = `Bearer ${newToken}`
+      return instance(originalRequest)
+    } catch (refreshError) {
+      processQueue(refreshError, null)
+      return Promise.reject(refreshError)
+    } finally {
+      isRefreshing = false
+    }
+  }
+)

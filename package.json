@@ -12,6 +12,7 @@
     "ant-design-vue": "^4.1.2",
     "axios": "^1.6.7",
     "dayjs": "^1.11.10",
+    "docx-preview": "^0.3.6",
     "pinia": "^2.1.7",
     "ua-parser-js": "^2.0.0-beta.3",
     "vue": "^3.4.19",

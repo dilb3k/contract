@@ -1,106 +1,102 @@
 import { defineStore } from 'pinia'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
-const useCore = defineStore('core', {
+export const useCore = defineStore('core', {
   state: () => ({
     locale: localStorage.getItem('lang') || 'uz',
-    collapsed: JSON.parse(localStorage.getItem('collapsed')),
-    loadingUrl: new Set([]),
+    collapsed: JSON.parse(localStorage.getItem('collapsed')) || false,
+    loadingUrl: new Set(),
     loadingMain: false,
     toastContent: null,
-    drawer: {
-      id: null,
-      open: false
-    },
+    drawer: { id: null, open: false },
     redirectUrl: null,
     innerHeight: window.innerHeight,
-    innerWidth: window.innerWidth
+    innerWidth: window.innerWidth,
+    lastVisitedRoute: localStorage.getItem('lastVisitedRoute') || null,
   }),
   actions: {
     loading(key) {
-      if (this.loadingUrl.has(key)) {
-        this.loadingUrl.delete(key)
-      } else {
-        this.loadingUrl.add(key)
-      }
+      this.loadingUrl.has(key) ? this.loadingUrl.delete(key) : this.loadingUrl.add(key)
     },
     changeCollapsed() {
       this.collapsed = !this.collapsed
       localStorage.setItem('collapsed', JSON.stringify(this.collapsed))
     },
     changeLocale(locale) {
+      const i18n = useI18n()
       localStorage.setItem('lang', locale)
-      window.location.reload()
+      i18n.locale.value = locale
     },
     redirect(url = null) {
-      this.redirectUrl = url
+      if (url) {
+        this.redirectUrl = url
+        setTimeout(() => {
+          router.push(url)
+        }, 300)
+      }
     },
     setToast(obj = null) {
       this.toastContent = obj
-    },
-    switchStatus(err) {
-      try {
-        const { response, message = 'Error' } = err
-        const data = response?.data
-        const status = response?.status
-        let toastMessage = {
-          type: 'error',
-          message: message,
-          fields: []
-        }
-        if (status >= 200 && status <= 300) {
-          toastMessage = {
-            locale: 'SUCCESS',
-            type: 'success'
-          }
-        }
-        if (status >= 400 && status < 500) {
-          if (
-            typeof data !== 'string' &&
-            'message' in data &&
-            data.message !== ''
-          ) {
-            toastMessage.message = data.message ? data.message : message
-            toastMessage.fields = data?.fields ? data.fields : []
-          }
-          if (typeof data === 'string') {
-            toastMessage.message = data
-            toastMessage.locale = 'ERROR'
-          }
-        }
-        if (status >= 500) {
-          toastMessage = {
-            locale: 'notification_component.internal_server_error',
-            type: 'error'
-          }
-          this.redirect(`/500`)
-        }
-        if (status === 403) {
-          toastMessage = {
-            locale: 'NOT_ALLOW',
-            type: 'error'
-          }
-        }
-        if (status !== 401) {
-          this.setToast(toastMessage)
-        }
-      } catch (err) {
-        console.log(err)
-        this.setToast({
-          type: 'error',
-          locale: 'ERROR'
-        })
+      if (obj) {
+        setTimeout(() => {
+          this.toastContent = null
+        }, 3000)
       }
     },
+    switchStatus(err) {
+      const { response } = err
+      const status = response?.status
+      const data = response?.data
+
+      if (status >= 500) {
+        this.redirect('/500')
+        return
+      }
+
+      if (status === 401) {
+        this.logout()
+        return
+      }
+
+      const toastMessage = {
+        type: status >= 200 && status < 300 ? 'success' : 'error',
+        message: data?.message || this.getStatusMessage(status)
+      }
+
+      this.setToast(toastMessage)
+    },
+
+    getStatusMessage(status) {
+      switch (status) {
+        case 400:
+          return 'Noto\'g\'ri so\'rov'
+        case 401:
+          return 'Avtorizatsiya xatosi'
+        case 403:
+          return 'Ruxsat berilmagan'
+        case 404:
+          return 'Topilmadi'
+        case 422:
+          return 'Ma\'lumotlar xato'
+        case 500:
+          return 'Server xatosi'
+        default:
+          return 'Xatolik yuz berdi'
+      }
+    },
+
     logout() {
       localStorage.clear()
-      this.redirect(`/auth/login`)
+      this.redirectUrl = null
+      this.redirect('/auth/login')
+    },
+    setLastVisitedRoute(routeName) {
+      this.lastVisitedRoute = routeName
+      localStorage.setItem('lastVisitedRoute', routeName)
     }
   },
   getters: {
-    isLoading: (state) => (key) => {
-      return state?.loadingUrl.has(key)
-    }
+    isLoading: (state) => (key) => state.loadingUrl.has(key)
   }
 })
-
-export default useCore

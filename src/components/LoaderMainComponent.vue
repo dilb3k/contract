@@ -1,5 +1,5 @@
 <script setup>
-import useCore from '../store/core.pinia.js'
+import {useCore} from '../store/core.pinia.js'
 import IconLoader from './icons/solid/IconLoader.vue'
 
 const props = defineProps({

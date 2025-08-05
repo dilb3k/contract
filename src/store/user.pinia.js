@@ -1,194 +1,173 @@
-import { defineStore, storeToRefs } from 'pinia'
+import { defineStore } from 'pinia';
 import {
   ApiGetMe,
   ApiGetAllUser,
   ApiGetOneUser,
   ApiEditUser,
   ApiCreateUser,
-  ApiDeleteUser, ApiGetAllOperators
-} from '@/api/user.api.js'
-import useCore from '@/store/core.pinia.js'
-import useModal from '@/composables/useModal.js'
-const {close} = useModal()
+  ApiDeleteUser,
+  ApiGetAllOperators,
+  ApiChangeRoleUser,
+  ApiChangeStatusUser,
+  ApiSetPassword
+} from '@/api/user.api.js';
+import { useCore } from './core.pinia.js';
+import useModal from '@/composables/useModal.js';
 
-const useUser = defineStore('user', {
+const { close } = useModal();
+
+export const useUser = defineStore('user', {
   state: () => ({
-    users: {
-      content: [],
-      page: 0,
-      size: 10,
-      totalElements: 0,
-      totalPages: 0
-    },
-    user:{},
-    operators:[],
-    selectedOperators: [6],
-    userForm:{
-      firstName: null,
-      lastName: null,
-      username: null,
-      password: null,
-    },
+    users: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 },
+    user: { role: null },
+    operators: [],
+    selectedOperators: [],
+    userForm: { firstName: null, lastName: null, username: null, password: null },
     userLoader: false,
-    userMe: true,
+    userMe: true
   }),
   actions: {
-    getUserMe(callback){
-      const coreStore = useCore()
-      this.userMe = true
-      ApiGetMe()
-        .then(({data}) => {
-          if (data.status !== 'ACTIVE') coreStore.logout()
-          callback(data.role)
-          this.user = data
-        })
-        .catch((error) => {
-          coreStore.switchStatus(error)
-        })
-        .finally(() => {
-          this.userMe = false
-        })
+    async getUserMe(callback) {
+      this.userMe = true;
+      const coreStore = useCore();
+      try {
+        const { data } = await ApiGetMe();
+        this.user = { ...data, role: data.role || null };
+        callback?.(data.role);
+      } catch (error) {
+        coreStore.switchStatus(error);
+        this.user = { role: null };
+      } finally {
+        this.userMe = false;
+      }
     },
 
-    getAllUsers({page, size, search, status}) {
+    async getAllUsers({ page = 0, size = 10, search = null, status = null }) {
+      this.userLoader = true;
+      try {
+        const { data } = await ApiGetAllUser(page, size, search, status);
+        this.users.content = data.content;
+        this.users.page = data.pageable.pageNumber;
+        this.users.totalElements = data.totalElements;
+        this.users.totalPages = data.totalPages;
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async getAllOperators() {
+      this.userLoader = true;
+      try {
+        const { data } = await ApiGetAllOperators();
+        this.operators = data;
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async getOneUser(id) {
+      if (!id) return;
+      this.userLoader = true;
+      try {
+        const { data } = await ApiGetOneUser(id);
+        this.userForm = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          username: data.username,
+          password: null
+        };
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async changeRoleUser(userId, role) {
+      if (!userId || !role) return;
+      this.userLoader = true;
+      try {
+        await ApiChangeRoleUser(userId, role);
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async changeStatusUser(userId, status) {
+      if (!userId || status === null) return;
+      this.userLoader = true;
+      try {
+        await ApiChangeStatusUser(userId, status);
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async createUser(modalKey) {
+      if (!this.userForm.username || !this.userForm.password) return;
+      this.userLoader = true;
+      try {
+        const { data } = await ApiCreateUser(this.userForm);
+        close(modalKey);
+        this.users.content.push(data);
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async editUser(userId, modalKey) {
+      if (!userId || !this.userForm.username) return;
+      this.userLoader = true;
+      try {
+        const { data } = await ApiEditUser(userId, this.userForm);
+        this.userForm = {};
+        close(modalKey);
+        const elIndex = this.users.content.findIndex((item) => item.id === userId);
+        if (elIndex !== -1) this.users.content.splice(elIndex, 1, data);
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+    async deleteUser(userId) {
+      if (!userId) return;
+      this.userLoader = true;
+      try {
+        await ApiDeleteUser(userId);
+        const elIndex = this.users.content.findIndex((item) => item.id === userId);
+        if (elIndex !== -1) this.users.content.splice(elIndex, 1);
+      } catch (error) {
+        useCore().switchStatus(error);
+      } finally {
+        this.userLoader = false;
+      }
+    },
+
+          async setUserPassword(userId, passwordData) {
+      if (!passwordData.oldPassword || !passwordData.newPassword) {
+        throw new Error('Old password and new password are required')
+      }
       this.userLoader = true
-      const core = useCore()
-
-      ApiGetAllUser(page, size, search, status)
-        .then(({ data }) => {
-          this.users.content = data.content
-          this.users.page = data.pageable.pageNumber
-          this.users.totalElements = data.totalElements
-          this.users.totalPages = data.totalPages
-        })
-        .catch((error) => {
-          core.switchStatus(error)
-        })
-        .finally(() => {
-          this.userLoader = false
-        })
-    },
-
-    getAllOperators() {
-      this.userLoader = true
-      const core = useCore()
-
-      ApiGetAllOperators()
-        .then(({ data }) => {
-          this.operators = data
-        })
-        .catch((error) => {
-          core.switchStatus(error)
-        })
-        .finally(() => {
-          this.userLoader = false
-        })
-    },
-
-    getOneUser(id) {
-      this.userLoader = true
-      const { switchStatus } = useCore()
-
-      ApiGetOneUser(id)
-        .then(({data}) => {
-          this.userForm = {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            username: data.username,
-            password: null
-          }
-        })
-        .catch((error) => {
-          switchStatus(error)
-        })
-        .finally(() => {
-          this.userLoader = false
-        })
-    },
-
-    givePermissionUser(form) {
-    },
-
-    changeRoleUser(userId, role) {
-    },
-
-    changeStatusUser(userId, status) {
-    },
-
-    createUser(modalKey) {
-      this.userLoader = true
-      const {switchStatus, setToast } = useCore()
-
-      ApiCreateUser(this.userForm)
-        .then(({data}) => {
-          close(modalKey)
-          this.users.content.push(data)
-          setToast({
-            type: 'success',
-            locale: `UserView.created`
-          })
-        })
-        .catch((error) => {
-          switchStatus(error)
-        })
-        .finally(() => {
-          this.userLoader = false
-        })
-    },
-
-    editUser(userId, modalKey) {
-      this.userLoader = true
-      const {switchStatus, setToast } = useCore()
-      const form = this.userForm
-        ApiEditUser(userId, form)
-        .then(({data}) => {
-          this.userForm = {}
-          close(modalKey)
-          this.findAndUpdate(userId, data)
-          setToast({
-            type: 'success',
-            locale: `UserView.edited`
-          })
-        })
-        .catch((error) => {
-          switchStatus(error)
-        })
-        .finally(() => {
-          this.userLoader = false
-        })
-    },
-
-    deleteUser(userId) {
-      this.userLoader = true
-      const {switchStatus, setToast } = useCore()
-      ApiDeleteUser(userId)
-        .then(() => {
-          this.findAndDelete(userId)
-          setToast({
-            type: 'success',
-            locale: `UserView.deleted`
-          })
-        })
-        .catch((error) => {
-          switchStatus(error)
-        })
-        .finally(() => {
-          this.userLoader = false
-        })
-    },
-
-    findAndUpdate(id, data) {
-      const elIndex = this.users.content.findIndex(item => item.id === id)
-
-      this.users?.content.splice(elIndex, 1, data)
-    },
-    findAndDelete(id) {
-      const elIndex = this.users?.content.findIndex(item => item.id === id)
-
-      this.users?.content.splice(elIndex, 1)
-    },
-
-  }
-})
-
-export default useUser
+      try {
+        const response = await ApiSetPassword(userId, passwordData)
+        return response
+      } catch (error) {
+        useCore().switchStatus(error)
+        throw error
+      } finally {
+        this.userLoader = false
+      }
+    }}
+});

@@ -1,0 +1,22 @@
+import { api } from '@/utils/api/index.js'
+
+export const ApiCreateDownloadInfo = (data) =>
+    api({
+        url: '/download-info/create',
+        method: 'POST',
+        data,
+    });
+
+export const ApiGetDownloadInfo = (page = 0, size = 10, status = null) =>
+    api({
+        url: '/download-info',
+        method: 'GET',
+        params: { page, size, status },
+    });
+
+export const ApiDownloadDocument = (id, format) =>
+    api({
+        url: `/download-info/${id}/download`,
+        method: 'GET',
+        responseType: 'arraybuffer',
+    });

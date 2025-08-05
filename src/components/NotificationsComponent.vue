@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Button, notification } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
-import useCore from '@/store/core.pinia.js'
+import {useCore} from '@/store/core.pinia.js'
 
 const { t } = useI18n()
 const router = useRouter()

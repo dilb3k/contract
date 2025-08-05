@@ -1,100 +1,86 @@
 import { api } from '@/utils/api/index.js'
+const getCommonHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+  'ngrok-skip-browser-warning': '69420',
+  'Content-Type': 'application/json',
+});
+export const ApiGetAllUser = (page = 0, size = 10, search = null, status = null) =>
+  api({
+    url: 'users',
+    method: 'GET',
+    params: { page, size, search, status },
+  });
 
-export function ApiGetAllUser(
-  page = 0,
-  size = 10,
-  search = null,
-  status = null
-){
-  return api({
+export const ApiGetMe = () =>
+  api({
+    url: 'users/me',
+    method: 'GET',
+  });
+
+export const ApiGetOneUser = (id) =>
+  api({
     url: 'user',
     method: 'GET',
-    params: {
-      page,
-      size,
-      search,
-      status,
-    }
-  })
-}
+    pk: id,
+  });
 
-export function ApiGetMe() {
-  return api({
-    url: 'user/me',
-    method: 'GET',
-  })
-}
-
-export function ApiGetOneUser(id) {
-  return api({
-    url: 'user',
-    method: 'GET',
-    pk: id
-  })
-}
-
-export function ApiGetAllOperators() {
-  return api({
+export const ApiGetAllOperators = () =>
+  api({
     url: 'user/operators',
     method: 'GET',
-  })
-}
+  });
 
-export function ApiGivePermission(form){
-  return api({
+export const ApiGivePermission = (form) =>
+  api({
     url: 'user/give-permission',
     method: 'PUT',
-    data: form
-  })
-}
+    data: form,
+  });
 
-export function ApiChangeRoleUser(userId, role) {
-  const data = new FormData()
-
-  data.append('role', role)
-
-  return api({
+export const ApiChangeRoleUser = (userId, role) =>
+  api({
     url: 'user/change-role',
     method: 'PUT',
     pk: userId,
-    data
-  })
-}
+    data: { role },
+  });
 
-export function ApiChangeStatusUser(userId, status) {
-  const data = new FormData()
-
-  data.append('status', status)
-
-  return api({
+export const ApiChangeStatusUser = (userId, status) =>
+  api({
     url: 'user/change-status',
     method: 'PUT',
     pk: userId,
-    data
-  })
-}
+    data: { status },
+  });
 
-export function ApiCreateUser(form) {
-  return api({
+export const ApiCreateUser = (form) =>
+  api({
     url: 'user/add/operator',
     method: 'POST',
-    data: form
-  })
-}
+    data: form,
+  });
 
-export function ApiEditUser(userId, form) {
-  return api({
-    url: 'user',
+export const ApiEditUser = (userId, form) =>
+  api({
+    url: 'users',
     method: 'PUT',
     pk: userId,
-    data: form
-  })
-}
+    data: form,
+  });
 
-export function ApiDeleteUser(userId) {
-  return api({
+export const ApiDeleteUser = (userId) =>
+  api({
     url: 'user',
     method: 'DELETE',
     pk: userId,
-  })
-}
+  });
+export const ApiSetPassword = (userId, passwordData) =>
+  api({
+    url: `users/set-password`,
+    method: 'POST',
+    params:{
+      oldPassword: passwordData.oldPassword,
+      newPassword: passwordData.newPassword,
+    },
+    headers: getCommonHeaders(),
+  });
