@@ -20,38 +20,39 @@
       bordered
       :scroll="{ x: 600 }"
     >
-<template #bodyCell="{ column, record, index }">
-  <template v-if="column.dataIndex === 'ni'">
-    {{ index + 1 + (contracts?.page * contracts?.size || 0) }}
-  </template>
+      <template #bodyCell="{ column, record, index }">
+        <template v-if="column.dataIndex === 'ni'">
+          {{ index + 1 + (contracts?.page * contracts?.size || 0) }}
+        </template>
 
-  <template v-if="column.dataIndex === 'name'">
-    {{ record.name || t('NO_DATA') }}
-  </template>
+        <template v-if="column.dataIndex === 'name'">
+          {{ record.name || t('NO_DATA') }}
+        </template>
 
-  <template v-if="column.dataIndex === 'sample'">
-    {{ record.sample?.name || t('NO_DATA') }}
-  </template>
+        <template v-if="column.dataIndex === 'sample'">
+          {{ record.sample?.name || t('NO_DATA') }}
+        </template>
 
-  <template v-if="column.dataIndex === 'actions'">
-    <a-dropdown :trigger="['click']" placement="bottomRight">
-      <a-button :loading="openingFileId === record.id">
-        <icon-eye />
-      </a-button>
-      <template #overlay>
-        <a-menu @click="({ key }) => openFile(record, key)">
-          <a-menu-item key="pdf">
-            {{ t('PDF') }}
-          </a-menu-item>
-          <a-menu-item key="docx">
-            {{ t('DOCX') }}
-          </a-menu-item>
-        </a-menu>
+        <template v-if="column.dataIndex === 'actions'">
+          <a-dropdown :trigger="['click']" placement="bottomRight">
+            <a-space>
+              <a-button :loading="openingFileId === record.id">
+                <icon-eye />
+              </a-button>
+            </a-space>
+            <template #overlay>
+              <a-menu @click="({ key }) => openFile(record, key)">
+                <a-menu-item key="pdf">
+                  {{ t('PDF') }}
+                </a-menu-item>
+                <a-menu-item key="docx">
+                  {{ t('DOCX') }}
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </template>
       </template>
-    </a-dropdown>
-  </template>
-</template>
-
     </a-table>
 
     <pagination-component
@@ -141,7 +142,7 @@ const columns = [
   { title: '№', dataIndex: 'ni', width: 80, align: 'center' },
   { title: t('ContractsView.name'), dataIndex: 'name' },
   { title: t('TemplatesView.title'), dataIndex: 'sample', align: 'center' },
-  { title: '', dataIndex: 'actions', width: 100, align: 'center' }
+  { title: '', dataIndex: 'actions', width: 120, align: 'center' }
 ]
 
 const fetchContracts = async (page = 0, size = 10, search = null) => {
@@ -258,7 +259,7 @@ const openFile = async (record, format) => {
     message.error(t('notification_component.invalid_file_format'))
     return
   }
-  if (openingFileId.value === record.id) return 
+  if (openingFileId.value === record.id) return
   openingFileId.value = record.id
   isLoading.value = true
   errorMessage.value = null
@@ -273,7 +274,7 @@ const openFile = async (record, format) => {
     message.success(t('notification_component.file_opened_successfully'))
   } catch (error) {
     errorMessage.value =
-      t('notification_component.error_opening_file') || 'Failed to open file'
+      t('notification_component.error') || 'Failed to open file'
     message.error(errorMessage.value)
     console.error('Open file error:', error)
   } finally {
