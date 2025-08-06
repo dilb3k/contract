@@ -6,7 +6,7 @@ import InternalServerError from '@/_500.vue'
 import LoginView from '@/pages/auth/login/LoginView.vue'
 import AuthView from '@/pages/auth/AuthView.vue'
 import dashboardRouter from './dashboard.router.js'
-import {useUser} from '@/store/user.pinia.js'
+import { useUser } from '@/store/user.pinia.js'
 import { storeToRefs } from 'pinia'
 
 export const router = createRouter({
@@ -70,8 +70,8 @@ const routerFactory = (i18n) => {
           userStore.getUserMe((role) => resolve(role))
         })
       } catch (error) {
-        console.error('Failed to fetch user role:', error)
-        return next({ name: 'AuthView' }) 
+        console.error(error)
+        return next({ name: 'AuthView' })
       }
     }
 

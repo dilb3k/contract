@@ -1,4 +1,3 @@
-// organization.pinia.js (unchanged except for createUser action)
 import { defineStore } from 'pinia'
 import {
     ApiGetAllOrganizations,

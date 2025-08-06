@@ -1,20 +1,23 @@
 import axios from 'axios'
 import { apiBaseUrl, apiVersion } from '@/utils/config/api.js'
+import { useCore } from '@/store/core.pinia.js'
 
 const instance = axios.create({
   baseURL: `${apiBaseUrl}/${apiVersion}`,
   headers: { 'ngrok-skip-browser-warning': '69420' },
-  timeout: 10000
+  timeout: 30000
 })
 
 const langObj = {
   uz: 'uz',
   ru: 'ru',
-  en: 'en',
+  en: 'en'
 }
 
 let isRefreshing = false
 let failedQueue = []
+let refreshAttempts = 0
+const maxRefreshAttempts = 1
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach(prom => {
@@ -24,12 +27,13 @@ const processQueue = (error, token = null) => {
       prom.resolve(token)
     }
   })
-
   failedQueue = []
 }
 
 export const api = ({ url, open = false, pk, ...props }) => {
+  const core = useCore()
   const lang = localStorage.getItem('lang') || 'uz'
+  const validLang = langObj[lang] || 'uz'
   const token = localStorage.getItem('access_token')
 
   if (!open && token) {
@@ -45,49 +49,52 @@ export const api = ({ url, open = false, pk, ...props }) => {
 
   props.headers = {
     ...props.headers,
-    Hl: langObj[lang],
+    Hl: validLang
   }
 
   return instance({ url, ...props })
 }
 
-const refreshAccessToken = async () => {
-  const refreshToken = localStorage.getItem('refresh_token')
+export const Clear = () => {
+  const core = useCore()
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  core.redirect('/auth/login')
+}
 
-  if (!refreshToken) {
-    Clear()
-    return Promise.reject(new Error('No refresh token'))
-  }
+const refreshAccessToken = async () => {
+  const core = useCore()
+  const refreshToken = localStorage.getItem('refresh_token')
 
   try {
     const { data } = await axios({
       url: `${apiBaseUrl}/${apiVersion}/auth/refresh`,
       method: 'POST',
       data: { refreshToken },
+      headers: { Hl: langObj[localStorage.getItem('lang') || 'uz'] }
     })
 
     localStorage.setItem('access_token', data.accessToken)
     localStorage.setItem('refresh_token', data.refreshToken)
-
+    refreshAttempts = 0
     return data.accessToken
   } catch (error) {
-    Clear()
     throw error
   }
-}
-
-export const Clear = () => {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
-  window.location.href = '/auth/login'
 }
 
 instance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const core = useCore()
     const originalRequest = error.config
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (error.response?.status !== 401) {
+      return Promise.reject(error)
+    }
+
+    if (originalRequest._retry || refreshAttempts >= maxRefreshAttempts) {
+      Clear()
       return Promise.reject(error)
     }
 
@@ -104,6 +111,7 @@ instance.interceptors.response.use(
 
     originalRequest._retry = true
     isRefreshing = true
+    refreshAttempts++
 
     try {
       const newToken = await refreshAccessToken()

@@ -28,8 +28,6 @@ import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 import { useDownload } from '@/store/download.pinia'
 import useQueryParams from '@/composables/useQueryParams.js'
-import { ReloadOutlined } from '@ant-design/icons-vue' // Use Ant Design's reload icon
-// If you have a custom IconRefresh, replace ReloadOutlined with IconRefresh
 
 const { t } = useI18n()
 const downloadStore = useDownload()
@@ -49,7 +47,6 @@ const handleSearch = debounce(() => {
     status: selectedStatus.value || undefined
   }
   setQueries(query, { saveHistory: false })
-  downloadStore.getAllDownloads(query)
 }, 300)
 
 const handleRefresh = debounce(async () => {
@@ -57,9 +54,9 @@ const handleRefresh = debounce(async () => {
     const query = {
       page: 0,
       size: 10,
-      status: undefined // Reset status filter
+      status: undefined 
     }
-    selectedStatus.value = null // Clear the select input
+    selectedStatus.value = null 
     setQueries(query, { saveHistory: false })
     await downloadStore.getAllDownloads(query)
   } catch (error) {

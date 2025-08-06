@@ -30,13 +30,12 @@ const downloadStore = useDownload()
 watch(
   () => route.query,
   (query) => {
-    downloadStore.getAllDownloads({
-      page: Number(query.page) || 0,
-      size: Number(query.size) || 10,
-      status: query.status || null
-    })
+    const page = Number(query.page) > 0 ? Number(query.page) - 1 : 0
+    const size = [10, 20, 50].includes(Number(query.size)) ? Number(query.size) : 10
+    const status = query.status || undefined
+    downloadStore.getAllDownloads({ page, size, status })
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 </script>
 

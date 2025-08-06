@@ -139,7 +139,7 @@ const editOrganization = (record) => {
     title: t('OrganizationView.edit'),
     width: 800,
     component: OrganizationFormComponent,
-    props: { organizationData: record, modalKey: Date.now() },
+    props: { organizationData: record, modalKey: Date.now() }
   })
 }
 

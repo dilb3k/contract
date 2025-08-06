@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="organization-table">
     <page-header
       :title="t('document_title.OrganizationContractsView')"
       @back="() => router.push('/dashboard/organizations')"
@@ -20,42 +20,49 @@
       bordered
       :scroll="{ x: 600 }"
     >
-      <template #bodyCell="{ column, record, index }">
-        <template v-if="column.dataIndex === 'ni'">
-          {{ index + 1 + (contracts?.page * contracts?.size || 0) }}
-        </template>
-        <template
-          v-if="column.dataIndex === 'name' || column.dataIndex === 'sample'"
-        >
-          {{ record[column.dataIndex]?.name || t('NO_DATA') }}
-        </template>
-        <template v-if="column.dataIndex === 'actions'">
-          <a-dropdown :trigger="['click']" placement="bottomRight">
-            <a-button :loading="openingFileId === record.id">
-              <icon-eye />
-            </a-button>
-            <template #overlay>
-              <a-menu @click="({ key }) => openFile(record, key)">
-                <a-menu-item key="pdf">
-                  {{ t('PDF') }}
-                </a-menu-item>
-                <a-menu-item key="docx">
-                  {{ t('DOCX') }}
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
-        </template>
+<template #bodyCell="{ column, record, index }">
+  <template v-if="column.dataIndex === 'ni'">
+    {{ index + 1 + (contracts?.page * contracts?.size || 0) }}
+  </template>
+
+  <template v-if="column.dataIndex === 'name'">
+    {{ record.name || t('NO_DATA') }}
+  </template>
+
+  <template v-if="column.dataIndex === 'sample'">
+    {{ record.sample?.name || t('NO_DATA') }}
+  </template>
+
+  <template v-if="column.dataIndex === 'actions'">
+    <a-dropdown :trigger="['click']" placement="bottomRight">
+      <a-button :loading="openingFileId === record.id">
+        <icon-eye />
+      </a-button>
+      <template #overlay>
+        <a-menu @click="({ key }) => openFile(record, key)">
+          <a-menu-item key="pdf">
+            {{ t('PDF') }}
+          </a-menu-item>
+          <a-menu-item key="docx">
+            {{ t('DOCX') }}
+          </a-menu-item>
+        </a-menu>
       </template>
+    </a-dropdown>
+  </template>
+</template>
+
     </a-table>
 
     <pagination-component
-      v-if="contracts?.totalElements"
+      v-if="contracts?.totalElements > 0"
       :total="contracts?.totalElements"
-      @changeSize="handleSizeChange"
-      @onChange="handlePageChange"
+      :current="Number(contracts?.page ?? 0) + 1"
+      :page-size="contracts?.size || 10"
+      :disabled="contractLoader"
+      @change="handlePageChange"
+      @change-size="handleSizeChange"
     />
-
     <a-modal
       :open="modalVisible"
       :title="t('VIEW_FILE')"
@@ -70,7 +77,7 @@
       <template v-else-if="errorMessage">
         <p>{{ errorMessage }}</p>
         <a-button v-if="fileBlob" type="primary" @click="downloadFile">
-          {{ t('document_title.OrganizationContractsView') }}
+          {{ t('DOWNLOAD_FILE') }}
         </a-button>
       </template>
       <iframe
@@ -86,7 +93,7 @@
       <div v-else>
         <p>{{ t('NO_FILE_AVAILABLE') }}</p>
         <a-button v-if="fileBlob" type="primary" @click="downloadFile">
-          {{ t('document_title.OrganizationContractsView') }}
+          {{ t('DOWNLOAD_FILE') }}
         </a-button>
       </div>
     </a-modal>
@@ -94,7 +101,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -112,8 +119,16 @@ const contractStore = useContract()
 
 const openingFileId = ref(null)
 const organizationId = computed(() => route.params.organizationId)
-const contracts = computed(() => contractStore.contracts)
-const contractLoader = computed(() => contractStore.contractLoader)
+const contracts = computed(
+  () =>
+    contractStore.contracts || {
+      content: [],
+      page: 0,
+      size: 10,
+      totalElements: 0
+    }
+)
+const contractLoader = computed(() => contractStore.contractLoader || false)
 const modalVisible = ref(false)
 const fileUrl = ref(null)
 const fileFormat = ref(null)
@@ -125,28 +140,77 @@ const docxContainer = ref(null)
 const columns = [
   { title: '№', dataIndex: 'ni', width: 80, align: 'center' },
   { title: t('ContractsView.name'), dataIndex: 'name' },
-  { title: t('TemplatesView.name'), dataIndex: 'sample', align: 'center' },
+  { title: t('TemplatesView.title'), dataIndex: 'sample', align: 'center' },
   { title: '', dataIndex: 'actions', width: 100, align: 'center' }
 ]
 
-const fetchContracts = async () => {
-  if (!organizationId.value)
-    return message.error(t('notification_component.organization_not_selected'))
+const fetchContracts = async (page = 0, size = 10, search = null) => {
+  if (!organizationId.value) {
+    message.error(t('notification_component.organization_not_selected'))
+    return
+  }
   try {
+    console.log('Fetching contracts with:', {
+      page,
+      size,
+      search,
+      organizationId: organizationId.value
+    })
     await contractStore.getAllOrganizationContracts(
-      +(route.query.page || 1) - 1,
-      +(route.query.size || 10),
-      route.query.search || null,
+      page,
+      size,
+      search,
       organizationId.value
     )
-  } catch {
+    console.log('Fetch successful, contracts:', contractStore.contracts)
+  } catch (error) {
     message.error(t('notification_component.error_fetch_contracts'))
+    console.error('Fetch contracts error:', error)
   }
 }
 
+const syncQueryParams = async () => {
+  const page = parseInt(route.query.page, 10) || 1
+  const size = parseInt(route.query.size, 10) || 10
+  const search = route.query.search || null
+  const backendPage = Math.max(0, page - 1)
+
+  if (
+    !contracts.value?.content ||
+    contracts.value.content.length === 0 ||
+    backendPage !== contracts.value.page ||
+    size !== contracts.value.size ||
+    search !== route.query.search
+  ) {
+    await fetchContracts(backendPage, size, search)
+  } else {
+    console.log('Skipping fetch, contracts already loaded:', contracts.value)
+  }
+}
+
+onMounted(() => {
+  syncQueryParams()
+})
+
+watch(
+  () => route.query,
+  () => syncQueryParams(),
+  { deep: true }
+)
+
 watch(modalVisible, async (val) => {
-  if (val && fileFormat.value === 'docx' && fileBlob.value) {
+  if (!val) {
+    closeModal()
+    return
+  }
+  if (
+    val &&
+    fileFormat.value === 'docx' &&
+    fileBlob.value &&
+    docxContainer.value
+  ) {
     try {
+      isLoading.value = true
       const buffer = await fileBlob.value.arrayBuffer()
       await renderAsync(buffer, docxContainer.value, null, {
         className: 'docx-wrapper',
@@ -157,28 +221,44 @@ watch(modalVisible, async (val) => {
       })
       message.success(t('notification_component.file_opened_successfully'))
     } catch (error) {
-      errorMessage.value = t('DOCX_RENDER_ERROR') || 'Error rendering DOCX'
+      errorMessage.value = t('DOCX_RENDER_ERROR') || 'Error rendering DOCX file'
+      console.error('DOCX render error:', error)
+    } finally {
+      isLoading.value = false
     }
   }
 })
 
 const handleSizeChange = async (size) => {
-  await fetchContracts()
-  router.push({ query: { ...route.query, size } })
+  try {
+    await router.push({ query: { ...route.query, size, page: 1 } })
+    await fetchContracts(0, size, route.query.search || null)
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Page size change error:', error)
+  }
 }
 
 const handlePageChange = async (page) => {
-  await fetchContracts()
-  router.push({ query: { ...route.query, page } })
+  try {
+    await router.push({ query: { ...route.query, page } })
+    await fetchContracts(
+      page - 1,
+      contracts.value.size,
+      route.query.search || null
+    )
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Page change error:', error)
+  }
 }
 
 const openFile = async (record, format) => {
-  if (
-    !record?.id ||
-    !['pdf', 'docx'].includes(format) ||
-    openingFileId.value === record.id
-  )
+  if (!record?.id || !['pdf', 'docx'].includes(format)) {
+    message.error(t('notification_component.invalid_file_format'))
     return
+  }
+  if (openingFileId.value === record.id) return 
   openingFileId.value = record.id
   isLoading.value = true
   errorMessage.value = null
@@ -186,15 +266,16 @@ const openFile = async (record, format) => {
 
   try {
     const { blob } = await contractStore.openContractFile(record.id, format)
+    if (!blob) throw new Error('No blob received')
     fileBlob.value = blob
     fileUrl.value = URL.createObjectURL(blob)
     modalVisible.value = true
-    if (format === 'pdf')
-      message.success(t('notification_component.file_opened_successfully'))
+    message.success(t('notification_component.file_opened_successfully'))
   } catch (error) {
     errorMessage.value =
-      t('notification_component.error') || 'Failed to open file'
+      t('notification_component.error_opening_file') || 'Failed to open file'
     message.error(errorMessage.value)
+    console.error('Open file error:', error)
   } finally {
     isLoading.value = false
     openingFileId.value = null
@@ -203,29 +284,34 @@ const openFile = async (record, format) => {
 
 const closeModal = () => {
   modalVisible.value = false
-  if (fileUrl.value) URL.revokeObjectURL(fileUrl.value)
+  if (fileUrl.value) {
+    URL.revokeObjectURL(fileUrl.value)
+  }
   fileUrl.value = null
   fileFormat.value = null
   fileBlob.value = null
   errorMessage.value = null
-  if (docxContainer.value) docxContainer.value.innerHTML = ''
+  if (docxContainer.value) {
+    docxContainer.value.innerHTML = ''
+  }
 }
 
 const downloadFile = () => {
-  if (!fileBlob.value || !fileFormat.value)
-    return message.error(t('notification_component.no_file_to_download'))
+  if (!fileBlob.value || !fileFormat.value) {
+    message.error(t('notification_component.no_file_to_download'))
+    return
+  }
   try {
     contractStore.downloadFile(
       fileBlob.value,
       `contract_${Date.now()}.${fileFormat.value}`
     )
     message.success(t('notification_component.download_started'))
-  } catch {
+  } catch (error) {
     message.error(t('notification_component.download_failed'))
+    console.error('Download error:', error)
   }
 }
-
-fetchContracts()
 </script>
 
 <style scoped>

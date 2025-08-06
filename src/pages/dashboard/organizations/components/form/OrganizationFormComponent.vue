@@ -71,7 +71,6 @@ const closeModal = () => {
   close(props.modalKey)
 }
 
-// ✅ handleSubmit function (clean)
 const handleSubmit = async () => {
   if (organizationStore.organizationLoader) return
 
@@ -90,7 +89,6 @@ const handleSubmit = async () => {
       message.success(t('OrganizationView.created'))
     }
 
-    // refresh and reset
     const query = getQueries()
     await organizationStore.getAllOrganizations({
       page: query.page ? Math.max(0, Number(query.page) - 1) : 0,

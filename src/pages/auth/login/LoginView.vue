@@ -39,7 +39,10 @@ async function onFinish() {
     <a-form-item
       :label="t('LoginView.login')"
       name="username"
-      :rules="[requiredField]"
+      :rules="[
+        { required: true, message: t('REQUIRED_FIELD') },
+        { max: 24, message: t('MAX_LENGTH_24') }
+      ]"
     >
       <a-input
         v-model:value="form.username"
@@ -70,6 +73,7 @@ async function onFinish() {
         html-type="submit"
         type="primary"
         size="large"
+        class="ant-btn-primary"
       >
         {{ t('LoginView.enter') }}
       </a-button>
@@ -77,8 +81,20 @@ async function onFinish() {
   </a-form>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
+@import '@/assets/styles/variable.scss';
+
 .ant-form-item {
   margin-bottom: 24px;
+}
+:deep(.ant-btn-primary) {
+  background-color: $primary;
+  color: $white;
+  &:hover {
+    background-color: darken($primary, 5%);
+  }
+  &:active {
+    background-color: darken($primary, 8%);
+  }
 }
 </style>

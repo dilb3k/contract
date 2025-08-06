@@ -148,14 +148,12 @@ export const useUser = defineStore('user', {
         await ApiDeleteUser(userId);
         const elIndex = this.users.content.findIndex((item) => item.id === userId);
         if (elIndex !== -1) this.users.content.splice(elIndex, 1);
-      } catch (error) {
-        useCore().switchStatus(error);
       } finally {
         this.userLoader = false;
       }
     },
 
-          async setUserPassword(userId, passwordData) {
+    async setUserPassword(userId, passwordData) {
       if (!passwordData.oldPassword || !passwordData.newPassword) {
         throw new Error('Old password and new password are required')
       }
@@ -163,11 +161,9 @@ export const useUser = defineStore('user', {
       try {
         const response = await ApiSetPassword(userId, passwordData)
         return response
-      } catch (error) {
-        useCore().switchStatus(error)
-        throw error
       } finally {
         this.userLoader = false
       }
-    }}
+    }
+  }
 });

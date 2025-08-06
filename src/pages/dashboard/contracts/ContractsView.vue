@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -55,31 +55,63 @@ const downloadStore = useDownload()
 
 const selectedRowKeys = ref([])
 const contractLoader = computed(() => contractStore.contractLoader)
-const contracts = computed(() => contractStore.contracts)
+const contracts = computed(
+  () =>
+    contractStore.contracts || {
+      content: [],
+      page: 0,
+      size: 10,
+      totalElements: 0
+    }
+)
 
-onMounted(() => {
-  const page = parseInt(route.query.page) || 0
-  const size = parseInt(route.query.size) || 10
-  const search = route.query.search || null
-  fetchContracts({ page, size, search })
-})
-
-async function fetchContracts({ page = 0, size = 10, search = null } = {}) {
+const fetchContracts = async (page = 0, size = 10, search = null) => {
   if (contractStore.contractLoader) return
   try {
     await contractStore.getAllContracts(page, size, search)
   } catch (error) {
     message.error(t('notification_component.error_fetch_contracts'))
+    console.error('Fetch contracts error:', error)
   }
 }
 
+const syncQueryParams = async () => {
+  const page = parseInt(route.query.page, 10) || 1
+  const size = parseInt(route.query.size, 10) || 10
+  const search = route.query.search || null
+  const backendPage = Math.max(0, page - 1)
+
+  if (
+    !contracts.value?.content ||
+    contracts.value.content.length === 0 ||
+    backendPage !== contracts.value.page ||
+    size !== contracts.value.size ||
+    search !== route.query.search
+  ) {
+    await fetchContracts(backendPage, size, search)
+  }
+}
+
+onMounted(() => {
+  syncQueryParams()
+})
+
+watch(
+  () => route.query,
+  () => syncQueryParams(),
+  { deep: true }
+)
+
 async function handleSearch(search) {
-  const page = 0
-  const size = contracts.value?.size || 10
-  await router.push({
-    query: { ...route.query, page, search: search || undefined }
-  })
-  await fetchContracts({ page, size, search })
+  try {
+    await router.push({
+      query: { ...route.query, page: 1, search: search || undefined }
+    })
+    await fetchContracts(0, contracts.value?.size || 10, search)
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Search error:', error)
+  }
 }
 
 function onSelectChange(selectedKeys) {
@@ -87,18 +119,27 @@ function onSelectChange(selectedKeys) {
 }
 
 async function handleSizeChange(size) {
-  const page = 0
-  const search = route.query.search || null
-  await router.push({ query: { ...route.query, page, size } })
-  await fetchContracts({ page, size, search })
+  try {
+    await router.push({ query: { ...route.query, page: 1, size } })
+    await fetchContracts(0, size, route.query.search || null)
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Page size change error:', error)
+  }
 }
 
 async function handlePageChange(page) {
-  const size = contracts.value?.size || 10
-  const search = route.query.search || null
-  const adjustedPage = page - 1
-  await router.push({ query: { ...route.query, page: adjustedPage, size } })
-  await fetchContracts({ page: adjustedPage, size, search })
+  try {
+    await router.push({ query: { ...route.query, page } })
+    await fetchContracts(
+      page - 1,
+      contracts.value?.size || 10,
+      route.query.search || null
+    )
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Page change error:', error)
+  }
 }
 
 function editContract(contract) {

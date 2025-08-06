@@ -20,7 +20,6 @@ onBeforeMount(async () => {
     userStore.getUserMe((userRole: string) => resolve(userRole))
   })
 
-  // Only redirect if on root dashboard
   if (route.path === '/dashboard' || route.name === 'DashboardView') {
     const targetRoute =
       dashboardRouter.find(
@@ -36,7 +35,6 @@ onBeforeMount(async () => {
   }
 })
 
-// Update last visited route on navigation
 router.afterEach((to) => {
   if (to.path.includes('dashboard') && to.name !== 'DashboardView') {
     corePinia.setLastVisitedRoute(to.name)

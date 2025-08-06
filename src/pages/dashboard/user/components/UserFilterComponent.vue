@@ -15,6 +15,7 @@
       size="large"
       allow-clear
       @change="handleFilterChange"
+      v-if="user?.role === 'DIRECTOR'"
     >
       <a-select-option value="DIRECTOR">{{
         t('ROLE_DIRECTOR')
@@ -29,6 +30,7 @@
       size="large"
       allow-clear
       @change="handleFilterChange"
+      v-if="user?.role === 'DIRECTOR'"
     >
       <a-select-option :value="true">{{ t('ACTIVE') }}</a-select-option>
       <a-select-option :value="false">{{ t('IN_ACTIVE') }}</a-select-option>
@@ -47,6 +49,12 @@ import { debounce } from 'lodash-es'
 import { useRoute, useRouter } from 'vue-router'
 import useQueryParams from '@/composables/useQueryParams'
 import IconPlus from '@/components/icons/solid/IconPlus.vue'
+import { useUser } from '@/store/user.pinia'
+import { storeToRefs } from 'pinia'
+
+const userStore = useUser()
+
+const { user } = storeToRefs(userStore)
 
 const props = defineProps({
   organizationId: { type: [String, Number], default: null },
@@ -157,16 +165,31 @@ const emitUpdates = () => {
 
 const updateUrlParams = () => {
   if (!isInitialized.value) return
-  const query = {}
+
+  const query = { ...route.query }
+
   if ((searchTextLocal.value || '').trim()) {
     query.search = searchTextLocal.value.trim()
+  } else {
+    delete query.search
   }
 
-  if (roleFilterLocal.value) query.role = roleFilterLocal.value
-  if (statusFilterLocal.value !== null && statusFilterLocal.value !== undefined)
-    query.status = statusFilterLocal.value.toString()
+  if (roleFilterLocal.value) {
+    query.role = roleFilterLocal.value
+  } else {
+    delete query.role
+  }
 
-  setQueries(query, { saveHistory: false })
+  if (
+    statusFilterLocal.value !== null &&
+    statusFilterLocal.value !== undefined
+  ) {
+    query.status = statusFilterLocal.value.toString()
+  } else {
+    delete query.status
+  }
+
+  router.replace({ query })
 }
 
 onMounted(async () => {

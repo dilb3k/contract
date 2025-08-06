@@ -100,7 +100,6 @@ export const useContract = defineStore('Contract', {
             this.contractLoader = true;
             try {
                 const response = await ApiGetSamples();
-                // Ensure response.data is an array; return empty array if not
                 const samples = Array.isArray(response.data) ? response.data : [];
                 return samples;
             } catch (error) {
@@ -163,7 +162,7 @@ export const useContract = defineStore('Contract', {
                 const response = await ApiViewContractFile(contractId, format)
                 const mimeType = response.headers['content-type'] || 'application/octet-stream'
                 const blob = new Blob([response.data], { type: mimeType })
-                return { blob, mimeType } // Return Blob and MIME type for handling in the component
+                return { blob, mimeType }
             } catch (error) {
                 throw error
             }

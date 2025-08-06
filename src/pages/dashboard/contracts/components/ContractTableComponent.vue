@@ -32,8 +32,12 @@
                 <template #icon><icon-users /></template>
               </a-button>
             </a-tooltip>
+
             <a-tooltip
-              v-if="record.permissions.includes('UPDATE')"
+              v-if="
+                user?.role === 'DIRECTOR' ||
+                record.permissions.includes('UPDATE')
+              "
               :title="t('EDIT')"
             >
               <a-button
@@ -43,8 +47,12 @@
                 <template #icon><icon-edit /></template>
               </a-button>
             </a-tooltip>
+
             <a-popconfirm
-              v-if="record.permissions.includes('DELETE')"
+              v-if="
+                user?.role === 'DIRECTOR' ||
+                record.permissions.includes('DELETE')
+              "
               :title="t('SURE_DELETE')"
               :description="`${record.name || 'Shartnoma'} ni o'chirishni xohlaysizmi?`"
               :ok-text="t('OK')"
@@ -69,7 +77,7 @@
     <pagination-component
       v-if="contracts?.totalElements > 0"
       :total="contracts?.totalElements"
-      :current="(contracts?.page || 0) + 1"
+      :current="Number(contracts?.page ?? 0) + 1"
       :page-size="contracts?.size || 10"
       :disabled="contractStore.contractLoader"
       @change="handlePageChange"
@@ -82,7 +90,6 @@
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { debounce } from 'lodash-es'
 import PaginationComponent from '@/components/PaginationComponent.vue'
 import IconEdit from '@/components/icons/outline/IconEdit.vue'
 import IconUsers from '@/components/icons/outline/IconUsers.vue'
@@ -155,16 +162,16 @@ function openPermissionsPage(contractId) {
   }
 }
 
-const handlePageChange = debounce((page) => {
+function handlePageChange(page) {
   if (contractStore.contractLoader) return
-  emit('change-page', page - 1)
-}, 300)
+  emit('change-page', page) 
+}
 
-const handleSizeChange = debounce((newSize) => {
+function handleSizeChange(newSize) {
   if (contractStore.contractLoader) return
   emit('change-size', newSize)
-  emit('change-page', 0)
-}, 300)
+  emit('change-page', 1) 
+}
 </script>
 
 <style scoped lang="scss">

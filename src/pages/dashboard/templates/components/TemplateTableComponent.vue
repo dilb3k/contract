@@ -32,7 +32,9 @@
         <template v-else-if="column.dataIndex === 'actions'">
           <a-space>
             <a-tooltip
-              v-if="record.permissions.includes('READ')"
+              v-if="
+                record.permissions.includes('READ') || user?.role === 'DIRECTOR'
+              "
               :title="t('VIEW')"
             >
               <a-button
@@ -66,7 +68,10 @@
               </a-button>
             </a-tooltip>
             <a-tooltip
-              v-if="record.permissions.includes('UPDATE')"
+              v-if="
+                record.permissions.includes('UPDATE') ||
+                user?.role === 'DIRECTOR'
+              "
               :title="t('EDIT')"
             >
               <a-button
@@ -77,7 +82,10 @@
               </a-button>
             </a-tooltip>
             <a-popconfirm
-              v-if="record.permissions.includes('DELETE')"
+              v-if="
+                record.permissions.includes('DELETE') ||
+                user?.role === 'DIRECTOR'
+              "
               :title="t('SURE_DELETE')"
               :description="`${record.name} ${t('SURE_DELETE')}`"
               :ok-text="t('OK')"
@@ -280,6 +288,7 @@ watch(modalVisible, async (isVisible) => {
 
     await renderAsync(arrayBuffer, docxContainer.value, null, {
       className: 'docx-wrapper',
+      Old: true,
       inWrapper: true,
       ignoreFonts: false,
       breakPages: true,
@@ -372,7 +381,7 @@ const openFile = async (record) => {
     } else if (error.message?.includes('blob')) {
       errorMessage.value = t('FILE_DATA_ERROR') || "Fayl ma'lumotlari xato"
     } else {
-      errorMessage.value = `${t('FILE_OPEN_ERROR') || 'Faylni ochishda xatolik'}: ${error.message || "Noma'lum xatolik"}`
+      errorMessage.value = `${t('FILE_OPEN_ERROR')}`
     }
 
     message.error(errorMessage.value)

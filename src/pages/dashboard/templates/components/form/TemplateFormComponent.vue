@@ -123,7 +123,6 @@ const handleSubmit = async () => {
     }
 
     if (props.templateData) {
-      // Edit mode
       if (!props.templateData.id) {
         message.error('Template ID is required')
         return
@@ -135,7 +134,6 @@ const handleSubmit = async () => {
       })
       await templateStore.editTemplate(props.templateData.id, formData)
     } else {
-      // Create mode
       if (!formState.file) {
         message.error(t('TemplatesView.REQUIRED_FILE'))
         return

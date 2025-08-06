@@ -25,6 +25,10 @@
       <a-input
         v-model:value="formState.username"
         :placeholder="t('UserView.enterUsername')"
+        :rules="[
+          { required: true, message: t('REQUIRED_FIELD') },
+          { max: 24, message: t('MAX_LENGTH_24') }
+        ]"
         autocomplete="off"
       />
     </a-form-item>
@@ -48,15 +52,19 @@
       name="role"
       :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
     >
-      <a-select v-model:value="formState.role">
-        <a-select-option value="DIRECTOR">{{
-          t('ROLE_DIRECTOR')
-        }}</a-select-option>
-        <a-select-option value="OPERATOR">{{
-          t('ROLE_OPERATOR')
-        }}</a-select-option>
+      <a-select
+        v-model:value="formState.role"
+        :placeholder="t('OrganizationView.select_role')"
+      >
+        <a-select-option value="DIRECTOR">
+          {{ t('ROLE_DIRECTOR') }}
+        </a-select-option>
+        <a-select-option value="OPERATOR">
+          {{ t('ROLE_OPERATOR') }}
+        </a-select-option>
       </a-select>
     </a-form-item>
+
     <a-form-item
       v-if="props.userData && !isProfileEdit"
       :label="t('UserView.status')"
@@ -223,10 +231,6 @@ const handleSubmit = async () => {
 
   &:active {
     border-color: darken($primary, 8%);
-  }
-
-  &::placeholder {
-    color: rgba($primary, 0.6);
   }
 }
 

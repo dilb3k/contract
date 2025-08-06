@@ -37,6 +37,7 @@
                 size="large"
                 class="btn-download"
                 :loading="isFileDownloading(record)"
+                :disabled="!isDownloadable(record)"
                 @click="downloadFile(record)"
               >
                 <template #icon><icon-download /></template>
@@ -51,19 +52,21 @@
     <pagination-component
       v-if="downloads?.totalElements > 0"
       :total="downloads?.totalElements"
-      :current="(downloads?.page || 0) + 1"
+      :current="currentPage"
       :page-size="downloads?.size || 10"
       :disabled="downloadStore.downloadLoader"
-      @changeSize="handleSizeChange"
-      @onChange="handlePageChange"
+      @change="handlePageChange"
+      @showSizeChange="handleSizeChange"
     />
   </div>
 </template>
+
 <script setup>
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { debounce } from 'lodash-es'
+import { watch } from 'vue'
 import { useDownload } from '@/store/download.pinia'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
@@ -85,6 +88,7 @@ const maxPage = computed(() =>
     )
   )
 )
+const currentPage = computed(() => (downloads.value?.page || 0) + 1)
 
 const columns = [
   { title: '№', dataIndex: 'ni', width: 80, align: 'center' },
@@ -113,15 +117,14 @@ watch(
   () => getQueries(),
   debounce(async (query) => {
     if (downloadStore.downloadLoader) return
-    const page = query.page ? Math.max(0, Number(query.page) - 1) : 0
+    const page = Number(query.page) > 0 ? Number(query.page) - 1 : 0
     const size = [10, 20, 50].includes(Number(query.size))
       ? Number(query.size)
       : 10
     const status = query.status || undefined
     const validPage = Math.min(page, maxPage.value - 1)
     try {
-      await router.replace({ query: { page: validPage, size, status } })
-      await downloadStore.getAllDownloads({ page: validPage, size, status })
+      await setQueries({ page: validPage + 1, size, status })
     } catch (error) {
       message.error(t('notification_component.error_fetch_downloads'))
     }
@@ -129,17 +132,13 @@ watch(
   { immediate: true, deep: true }
 )
 
-const handleSizeChange = debounce(async (size) => {
+const handleSizeChange = debounce(async (current, size) => {
   if (downloadStore.downloadLoader) return
-  const query = getQueries()
-  const page = query.page ? Math.max(0, Number(query.page) - 1) : 0
   const validSize = [10, 20, 50].includes(Number(size)) ? Number(size) : 10
-  const validPage = Math.min(page, maxPage.value - 1)
-  const status = query.status || undefined
+  const validPage = 0
+  const status = getQueries().status || undefined
   try {
-    await router.replace({
-      query: { page: validPage, size: validSize, status }
-    })
+    await setQueries({ page: validPage + 1, size: validSize, status })
     await downloadStore.getAllDownloads({
       page: validPage,
       size: validSize,
@@ -159,7 +158,7 @@ const handlePageChange = debounce(async (page) => {
     : 10
   const status = query.status || undefined
   try {
-    await router.replace({ query: { page: newPage, size, status } })
+    await setQueries({ page: newPage + 1, size, status })
     await downloadStore.getAllDownloads({ page: newPage, size, status })
   } catch (error) {
     message.error(t('notification_component.error'))

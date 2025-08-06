@@ -88,8 +88,9 @@
     <pagination-component
       v-if="users.totalElements > 0"
       :total="users.totalElements"
-      :page="users.page"
-      :size="users.size"
+      :current="Number(route.query.page) || 1"
+      :page-size="Number(route.query.size) || 10"
+      :disabled="organizationStore.organizationLoader"
       @change-size="handleSizeChange"
       @change-page="handlePageChange"
     />
@@ -99,7 +100,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useOrganization } from '@/store/organization.pinia'
@@ -114,6 +115,7 @@ import IconLock from '@/components/icons/outline/IconKey.vue'
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const organizationStore = useOrganization()
 const userStore = useUser()
 const { open } = useModal()
@@ -170,11 +172,15 @@ const fetchUsers = async () => {
   isSearching.value = true
 
   try {
+    const currentPage = Number(route.query.page) || 1
+    const currentSize = Number(route.query.size) || 10
+    const backendPage = currentPage - 1
+
     await organizationStore.fetchOrganizationUsers(
       user.value.role === 'DIRECTOR' ? 'ADMIN' : organizationId.value,
       searchText.value?.trim() || null,
-      +(route.query.size || 10),
-      +(route.query.page || 1) - 1,
+      currentSize,
+      backendPage,
       roleFilter.value,
       statusFilter.value,
       sortField.value,
@@ -205,12 +211,11 @@ const deleteUser = async (userData) => {
   try {
     await organizationStore.deleteUser(userData.id, organizationId.value)
     message.success(t('UserOrganizationView.deleted'))
-    fetchUsers(users.value.page + 1, users.value.size)
+    await fetchUsers()
   } catch (error) {
     message.error(t('notification_component.error_delete_user'))
   }
 }
-
 
 const handleRoleChange = async (userId, role) => {
   const originalUser = users.value.content.find((u) => u.id === userId)
@@ -222,27 +227,30 @@ const handleRoleChange = async (userId, role) => {
       originalUser.role = role
     }
 
-    const updatePayload = { 
+    const updatePayload = {
       role: role,
       status: originalStatus
     }
 
-    await organizationStore.updateUser(userId, updatePayload, organizationId.value)
+    await organizationStore.updateUser(
+      userId,
+      updatePayload,
+      organizationId.value
+    )
     message.success(t('notification_component.role_updated'))
-    
+
     await fetchUsers()
   } catch (error) {
     if (originalUser && originalRole) {
       originalUser.role = originalRole
     }
-    
+
     message.error(t('notification_component.error_update_role'))
     console.error('Role update error:', error)
-    
+
     await fetchUsers()
   }
 }
-
 
 const handleStatusChange = async (userId, checked) => {
   loadingSwitches.value[userId] = true
@@ -276,12 +284,32 @@ const handleStatusChange = async (userId, checked) => {
   }
 }
 
-const handleSizeChange = (size) => {
-  fetchUsers(1, size)
+const handleSizeChange = async (size) => {
+  try {
+    await router.replace({
+      query: {
+        ...route.query,
+        page: 1,
+        size: size
+      }
+    })
+  } catch (error) {
+    console.error('Size change error:', error)
+  }
 }
 
-const handlePageChange = (page) => {
-  fetchUsers(page, users.value.size)
+const handlePageChange = async (page) => {
+  try {
+    await router.replace({
+      query: {
+        ...route.query,
+        page: page,
+        size: users.value.size
+      }
+    })
+  } catch (error) {
+    console.error('Page change error:', error)
+  }
 }
 
 const initializeFiltersFromUrl = () => {
@@ -290,6 +318,12 @@ const initializeFiltersFromUrl = () => {
   roleFilter.value = query.role || null
   statusFilter.value =
     query.status !== undefined ? query.status === 'true' : null
+
+  if (!query.page) {
+    router.replace({
+      query: { ...query, page: 1, size: query.size || 10 }
+    })
+  }
 }
 
 watch(
@@ -308,7 +342,10 @@ watch(
       searchText.value = ''
       roleFilter.value = null
       statusFilter.value = null
-      fetchUsers()
+
+      router.replace({
+        query: { page: 1, size: 10 }
+      })
       return
     }
 

@@ -133,7 +133,7 @@ const loadingStates = reactive({})
 const normalizedUsers = computed(() => {
   return users.value.content.map((user) => ({
     ...user,
-    permissions: user.documentationPermissions || [] // Map samplePermissions to permissions
+    permissions: user.documentationPermissions || []
   }))
 })
 

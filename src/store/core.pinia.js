@@ -1,3 +1,4 @@
+
 import { defineStore } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -9,6 +10,7 @@ export const useCore = defineStore('core', {
     loadingUrl: new Set(),
     loadingMain: false,
     toastContent: null,
+    toastTimeoutId: null,
     drawer: { id: null, open: false },
     redirectUrl: null,
     innerHeight: window.innerHeight,
@@ -32,15 +34,20 @@ export const useCore = defineStore('core', {
       if (url) {
         this.redirectUrl = url
         setTimeout(() => {
-          router.push(url)
+          router.push(url).catch(err => console.error(err))
         }, 300)
       }
     },
     setToast(obj = null) {
+      if (this.toastTimeoutId) {
+        clearTimeout(this.toastTimeoutId)
+        this.toastTimeoutId = null
+      }
       this.toastContent = obj
       if (obj) {
-        setTimeout(() => {
+        this.toastTimeoutId = setTimeout(() => {
           this.toastContent = null
+          this.toastTimeoutId = null
         }, 3000)
       }
     },
@@ -48,26 +55,22 @@ export const useCore = defineStore('core', {
       const { response } = err
       const status = response?.status
       const data = response?.data
-
       if (status >= 500) {
         this.redirect('/500')
         return
       }
-
       if (status === 401) {
         this.logout()
         return
       }
-
       const toastMessage = {
         type: status >= 200 && status < 300 ? 'success' : 'error',
         message: data?.message || this.getStatusMessage(status)
       }
-
       this.setToast(toastMessage)
     },
-
-    getStatusMessage(status) {
+    getStatusMessage(status, customMessage = null) {
+      if (customMessage) return customMessage
       switch (status) {
         case 400:
           return 'Noto\'g\'ri so\'rov'
@@ -85,7 +88,6 @@ export const useCore = defineStore('core', {
           return 'Xatolik yuz berdi'
       }
     },
-
     logout() {
       localStorage.clear()
       this.redirectUrl = null
