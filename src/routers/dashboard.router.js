@@ -2,7 +2,7 @@ import UserView from '../pages/dashboard/user/UserView.vue';
 import DownloadsView from '../pages/dashboard/downloads/DownloadView.vue';
 import OrganizationView from '../pages/dashboard/organizations/OrganizationView.vue';
 import ContractsView from '../pages/dashboard/contracts/ContractsView.vue';
-import TemplatesView from '../pages/dashboard/templates/templatesView.vue';
+import TemplatesView from '../pages/dashboard/templates/TemplatesView.vue';
 import OrganizationContracts from '../pages/child-page/organization-contract/OrganizationContractsTable.vue';
 import ContractPermissions from '../pages/child-page/permission/ContractPermissionsTable.vue';
 import TemplatePermissions from '../pages/child-page/permission/TemplatePermissionsTable.vue';
