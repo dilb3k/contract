@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 import {
     ApiGetAllContracts,
     ApiGetContractById,
@@ -10,9 +10,8 @@ import {
     ApiGetPermissions,
     ApiGenerateContracts,
     ApiGrantPermission,
-    ApiGetAllOrganizationContracts,
     ApiViewContractFile,
-} from '@/api/contract.api.js';
+} from '@/api/contract.api.js'
 
 export const useContract = defineStore('Contract', {
     state: () => ({
@@ -20,161 +19,102 @@ export const useContract = defineStore('Contract', {
         contractLoader: false,
     }),
     actions: {
-        async getAllContracts(page = 0, size = 10, search = null) {
-            this.contractLoader = true;
+        async withLoading(promise) {
+            if (this.contractLoader) return
+            this.contractLoader = true
             try {
-                const response = await ApiGetAllContracts(page, size, search);
-                this.contracts = response.data;
-                return response.data;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async getAllOrganizationContracts(page = 0, size = 10, search = null, organizationId) {
-            if (!organizationId) throw new Error('Organization ID is required');
-            this.contractLoader = true;
-            try {
-                const response = await ApiGetAllOrganizationContracts(page, size, search, organizationId);
-                this.contracts = response.data;
-                return response.data;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async getContractById(contractId) {
-            if (!contractId) throw new Error('Contract ID is required');
-            this.contractLoader = true;
-            try {
-                const response = await ApiGetContractById(contractId);
-                return response.data;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async createContract(formData) {
-            if (!formData) throw new Error('Form data is required');
-            this.contractLoader = true;
-            try {
-                const response = await ApiCreateContract(formData);
-                await this.getAllContracts(this.contracts.page, this.contracts.size);
-                return response;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async editContract(contractId, formData) {
-            if (!contractId || !formData) throw new Error('Invalid contract ID or form data');
-            this.contractLoader = true;
-            try {
-                const response = await ApiEditContract(contractId, formData);
-                await this.getAllContracts(this.contracts.page, this.contracts.size);
-                return response;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async deleteContract(contractId) {
-            if (!contractId) throw new Error('Invalid contract ID');
-            this.contractLoader = true;
-            try {
-                const response = await ApiDeleteContract(contractId);
-                await this.getAllContracts(this.contracts.page, this.contracts.size);
-                return response;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async getSamples() {
-            this.contractLoader = true;
-            try {
-                const response = await ApiGetSamples();
-                const samples = Array.isArray(response.data) ? response.data : [];
-                return samples;
-            } catch (error) {
-                console.error('Error fetching samples:', error);
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async generateContracts(contractIds, formData) {
-            if (!contractIds?.length || !formData) throw new Error('Contract IDs and form data are required');
-            this.contractLoader = true;
-            try {
-                const response = await ApiGenerateContracts(contractIds, formData);
-                await this.getAllContracts(this.contracts.page, this.contracts.size);
-                return response;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async grantPermission(permissionData) {
-            if (!permissionData) throw new Error('Permission data is required');
-            this.contractLoader = true;
-            try {
-                const response = await ApiGrantPermission(permissionData);
-                return response.data;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async getPermissions(contractId) {
-            if (!contractId) throw new Error('Contract ID is required');
-            this.contractLoader = true;
-            try {
-                const response = await ApiGetPermissions(contractId);
-                return response.data;
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async deletePermissions(userId, contractId) {
-            if (!userId || !contractId) throw new Error('User ID and Contract ID are required');
-            this.contractLoader = true;
-            try {
-                await ApiDeletePermissions(userId, contractId);
-            } catch (error) {
-                throw error;
-            } finally {
-                this.contractLoader = false;
-            }
-        },
-        async openContractFile(contractId, format) {
-            try {
-                const response = await ApiViewContractFile(contractId, format)
-                const mimeType = response.headers['content-type'] || 'application/octet-stream'
-                const blob = new Blob([response.data], { type: mimeType })
-                return { blob, mimeType }
+                return await promise
             } catch (error) {
                 throw error
+            } finally {
+                this.contractLoader = false
             }
         },
+        async getAllContracts(page = 0, size = 10, search = null) {
+            return this.withLoading(
+                ApiGetAllContracts(page, size, search).then((response) => {
+                    this.contracts = response.data
+                    return response.data
+                })
+            )
+        },
+        async getContractById(contractId) {
+            if (!contractId) throw new Error('Contract ID is required')
+            return this.withLoading(ApiGetContractById(contractId).then((response) => response.data))
+        },
+        async createContract(formData) {
+            if (!formData) throw new Error('Form data is required')
+            return this.withLoading(
+                ApiCreateContract(formData).then((response) => {
+                    this.getAllContracts(this.contracts.page, this.contracts.size)
+                    return response
+                })
+            )
+        },
+        async editContract(contractId, formData) {
+            if (!contractId || !formData) throw new Error('Invalid contract ID or form data')
+            return this.withLoading(
+                ApiEditContract(contractId, formData).then((response) => {
+                    this.getAllContracts(this.contracts.page, this.contracts.size)
+                    return response
+                })
+            )
+        },
+        async deleteContract(contractId) {
+            if (!contractId) throw new Error('Invalid contract ID')
+            return this.withLoading(
+                ApiDeleteContract(contractId).then((response) => {
+                    this.getAllContracts(this.contracts.page, this.contracts.size)
+                    return response
+                })
+            )
+        },
+        async getSamples() {
+            return this.withLoading(
+                ApiGetSamples().then((response) => {
+                    return Array.isArray(response.data) ? response.data : []
+                })
+            )
+        },
+        async generateContracts(contractIds, formData) {
+            if (!contractIds?.length || !formData) throw new Error('Contract IDs and form data are required')
+            return this.withLoading(
+                ApiGenerateContracts(contractIds, formData).then((response) => {
+                    this.getAllContracts(this.contracts.page, this.contracts.size)
+                    return response
+                })
+            )
+        },
+        async grantPermission(permissionData) {
+            if (!permissionData) throw new Error('Permission data is required')
+            return this.withLoading(ApiGrantPermission(permissionData).then((response) => response.data))
+        },
+        async getPermissions(contractId) {
+            if (!contractId) throw new Error('Contract ID is required')
+            return this.withLoading(ApiGetPermissions(contractId).then((response) => response.data))
+        },
+        async deletePermissions(userId, contractId) {
+            if (!userId || !contractId) throw new Error('User ID and Contract ID are required')
+            return this.withLoading(ApiDeletePermissions(userId, contractId))
+        },
+        async openContractFile(contractId, format) {
+            return this.withLoading(
+                ApiViewContractFile(contractId, format).then((response) => {
+                    const mimeType = response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    const blob = new Blob([response.data], { type: mimeType })
+                    return { blob, mimeType }
+                })
+            )
+        },
+
         downloadFile(blob, filename) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-        }
-    }
-});
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = filename
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(link.href)
+        },
+    },
+})

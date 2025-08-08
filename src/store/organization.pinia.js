@@ -21,7 +21,6 @@ export const useOrganization = defineStore('Organization', {
     }),
     actions: {
         async fetchOrganizationUsers(
-            orgId = 'ME',
             search = null,
             size = 10,
             page = 0,
@@ -30,13 +29,12 @@ export const useOrganization = defineStore('Organization', {
             sortField = 'fullName',
             sortDirection = 'DESC'
         ) {
-            const requestId = JSON.stringify({ orgId, search, size, page, role, status, sortField, sortDirection })
+            const requestId = JSON.stringify({ search, size, page, role, status, sortField, sortDirection })
             if (this.lastRequestId === requestId && this.organizationLoader) return this.users
             this.lastRequestId = requestId
             this.organizationLoader = true
             try {
-                const effectiveOrgId = orgId === 'ME' ? 'ME' : orgId || 1
-                const response = await ApiGetOrganizationUsers(effectiveOrgId, page, size, search, sortDirection, role, status, sortField)
+                const response = await ApiGetOrganizationUsers(page, size, search, sortDirection, role, status, sortField)
                 this.users = {
                     ...response.data,
                     page: Number(response.data.page) || 0,
@@ -52,12 +50,11 @@ export const useOrganization = defineStore('Organization', {
             }
         },
 
-        async updateUser(userId, formData, orgId) {
+        async updateUser(userId, formData) {
             if (!userId) throw new Error('Invalid user ID')
             const userIndex = this.users.content.findIndex((user) => user.id === userId)
             const originalUser = userIndex !== -1 ? { ...this.users.content[userIndex] } : null
             try {
-                const effectiveOrgId = orgId === 'ME' ? 'ME' : orgId
                 const apiPayload = { ...formData }
                 if ('status' in formData) {
                     if (typeof formData.status === 'boolean') {
@@ -67,7 +64,7 @@ export const useOrganization = defineStore('Organization', {
                     }
                 }
                 console.log('API Update payload:', apiPayload)
-                const response = await ApiUpdateUser(userId, apiPayload, effectiveOrgId)
+                const response = await ApiUpdateUser(userId, apiPayload)
                 if (userIndex !== -1) {
                     const updatedUser = { ...this.users.content[userIndex] }
                     Object.keys(formData).forEach(key => {
@@ -94,14 +91,13 @@ export const useOrganization = defineStore('Organization', {
             }
         },
 
-        async createUser(formData, orgId) {
+        async createUser(formData) {
             this.organizationLoader = true
             try {
-                const effectiveOrgId = orgId === 'ME' ? 'ME' : orgId || 1
                 console.log('Sending createUser payload:', formData)
-                const response = await ApiCreateUser(formData, effectiveOrgId)
+                const response = await ApiCreateUser(formData)
                 console.log('Received createUser response:', response.data)
-                await this.fetchOrganizationUsers(effectiveOrgId, null, this.users.size, this.users.page)
+                await this.fetchOrganizationUsers(null, this.users.size, this.users.page)
                 return response
             } catch (error) {
                 console.error('Create user error:', error.response?.data || error.message)
@@ -173,8 +169,8 @@ export const useOrganization = defineStore('Organization', {
             }
         },
 
-        async deleteUser(userId, orgId) {
-            if (!orgId || !userId) throw new Error('Invalid organization or user ID')
+        async deleteUser(userId) {
+            if (!userId) throw new Error('Invalid user ID')
             this.organizationLoader = true
             try {
                 const response = await ApiDeleteUser(userId)
@@ -188,7 +184,7 @@ export const useOrganization = defineStore('Organization', {
             }
         },
 
-        async setUserPassword({ username, password }, orgId) {
+        async setUserPassword({ username, password }) {
             if (!username || !password) throw new Error('Invalid username or password')
             this.organizationLoader = true
             try {

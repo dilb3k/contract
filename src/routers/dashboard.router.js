@@ -3,7 +3,6 @@ import DownloadsView from '../pages/dashboard/downloads/DownloadView.vue';
 import OrganizationView from '../pages/dashboard/organizations/OrganizationView.vue';
 import ContractsView from '../pages/dashboard/contracts/ContractsView.vue';
 import TemplatesView from '../pages/dashboard/templates/TemplatesView.vue';
-import OrganizationContracts from '../pages/child-page/organization-contract/OrganizationContractsTable.vue';
 import ContractPermissions from '../pages/child-page/permission/ContractPermissionsTable.vue';
 import TemplatePermissions from '../pages/child-page/permission/TemplatePermissionsTable.vue';
 
@@ -13,22 +12,13 @@ const dashboardRouter = [
     name: 'UserView',
     component: UserView,
     meta: {
-      roles: ['DIRECTOR'],
+      roles: ['DIRECTOR', 'ADMIN'],
     },
   },
   {
     path: 'organizations',
     name: 'OrganizationView',
     component: OrganizationView,
-    meta: {
-      roles: ['ADMIN'],
-    },
-  },
-  {
-    path: 'organization-users/:id',
-    name: 'OrganizationUsers',
-    component: UserView,
-    props: true,
     meta: {
       roles: ['ADMIN'],
     },
@@ -46,7 +36,7 @@ const dashboardRouter = [
     name: 'ContractsView',
     component: ContractsView,
     meta: {
-      roles: ['DIRECTOR', 'OPERATOR'],
+      roles: ['DIRECTOR', 'OPERATOR', 'ADMIN'],
     },
   },
   {
@@ -55,14 +45,6 @@ const dashboardRouter = [
     component: DownloadsView,
     meta: {
       roles: ['DIRECTOR', 'OPERATOR'],
-    },
-  },
-  {
-    path: 'contracts/:organizationId',
-    name: 'OrganizationContractsView',
-    component: OrganizationContracts,
-    meta: {
-      roles: ['ADMIN'],
     },
   },
   {

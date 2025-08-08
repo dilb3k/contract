@@ -14,14 +14,6 @@ export const ApiGetAllContracts = (page = 0, size = 10, search = null) =>
         headers: getCommonHeaders(),
     });
 
-export const ApiGetAllOrganizationContracts = (page = 0, size = 10, search = null, organizationId) =>
-    api({
-        url: '/documentations',
-        method: 'GET',
-        params: { page, size, search, organizationId },
-        headers: getCommonHeaders(),
-    });
-
 export const ApiGetContractById = (contractId) =>
     api({
         url: `/documentations/${contractId}`,

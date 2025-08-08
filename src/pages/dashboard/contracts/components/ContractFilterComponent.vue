@@ -1,3 +1,4 @@
+```vue
 <template>
   <a-space class="contracts-filters">
     <a-input
@@ -6,12 +7,23 @@
       allow-clear
       size="large"
       class="search-input"
-      style="width: 200px"
       :loading="contractStore.contractLoader"
       @input="onSearch"
       @clear="onClear"
     />
+    <a-button
+      type="primary"
+      size="large"
+      :disabled="contractStore.contractLoader"
+      @click="openCreateModal"
+    >
+      {{ t('ContractsView.create') }}
+      <template #icon>
+        <icon-plus />
+      </template>
+    </a-button>
     <a-dropdown
+      v-if="user?.role === 'DIRECTOR'"
       :trigger="['click']"
       :disabled="!selectedRowKeys?.length || contractStore.contractLoader"
     >
@@ -34,6 +46,11 @@
         </a-menu>
       </template>
     </a-dropdown>
+    <template-contract-component
+      v-model:open="contractModalVisible"
+      :modal-key="contractModalKey"
+      @success="handleContractModalSuccess"
+    />
   </a-space>
 </template>
 
@@ -45,29 +62,31 @@ import { message } from 'ant-design-vue'
 import IconPlus from '@/components/icons/solid/IconPlus.vue'
 import { useContract } from '@/store/contract.pinia'
 import useQueryParams from '@/composables/useQueryParams'
+import TemplateContractComponent from './form/ContractFormComponent.vue'
+import { storeToRefs } from 'pinia'
+import { useUser } from '@/store/user.pinia'
 
 const { t } = useI18n()
+const userStore = useUser()
 const contractStore = useContract()
 const { getQueries, setQueries } = useQueryParams()
+const { user } = storeToRefs(userStore)
 
 const props = defineProps({
-  selectedRowKeys: {
-    type: Array,
-    default: () => []
-  }
+  selectedRowKeys: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['generate'])
 const searchQuery = ref('')
 const isGenerating = ref(false)
+const contractModalVisible = ref(false)
+const contractModalKey = ref(Date.now())
 
 const handleSearch = debounce(
   async (searchValue) => {
     if (contractStore.contractLoader) return
-
     const trimmedSearch = searchValue?.trim() || null
-    setQueries({ page: 0, search: trimmedSearch || undefined })
-
+    setQueries({ page: 1, search: trimmedSearch || undefined })
     try {
       await contractStore.getAllContracts(
         0,
@@ -89,6 +108,16 @@ const onSearch = () => {
 const onClear = () => {
   searchQuery.value = ''
   handleSearch(null)
+}
+
+const openCreateModal = () => {
+  contractModalVisible.value = true
+  contractModalKey.value = Date.now()
+}
+
+const handleContractModalSuccess = () => {
+  contractStore.getAllContracts()
+  contractModalVisible.value = false
 }
 
 onMounted(() => {
@@ -127,11 +156,11 @@ async function handleFormatSelect({ key }) {
 
 .contracts-filters {
   display: flex;
-  margin-bottom: 16px;
-  margin-left: 2px;
+  margin: 0 2px 16px 2px;
 }
 
-.btn-generate {
+.btn-generate,
+:deep(.ant-btn-primary) {
   background-color: $primary;
   color: white;
   &:hover {
@@ -151,3 +180,4 @@ async function handleFormatSelect({ key }) {
   font-size: 12px;
 }
 </style>
+```

@@ -203,9 +203,12 @@ async function generateContracts(selectedContractIds, format) {
 </script>
 
 <style scoped lang="scss">
+@import '@/assets/styles/variable.scss';
+
 .page-wrapper {
   width: 100%;
   min-height: 100vh;
+  margin-bottom: 32px;
 }
 
 .desktop-filters {
@@ -216,7 +219,7 @@ async function generateContracts(selectedContractIds, format) {
   display: none;
 }
 
-@media (max-width: 864px) {
+@media (max-width: 1264px) {
   .desktop-filters {
     display: none;
   }

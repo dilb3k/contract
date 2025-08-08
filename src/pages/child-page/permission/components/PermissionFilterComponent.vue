@@ -15,12 +15,10 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
-import { usePermission } from '@/store/permission.pinia'
 import useQueryParams from '@/composables/useQueryParams'
 
 const { t } = useI18n()
 const { getQueries, setQueries } = useQueryParams()
-const userStore = usePermission()
 
 const props = defineProps({
   searchText: String
@@ -31,14 +29,14 @@ const searchText = ref(props.searchText || getQueries().search || '')
 
 const emitSearch = debounce(() => {
   const query = {
-    page: 0,
+    page: 1,
     size: getQueries().size || 10,
     search: searchText.value?.trim() || undefined
   }
   setQueries(query, { saveHistory: false })
   emit('update:searchText', searchText.value)
   emit('search')
-}, 300)
+}, 500)
 
 watch(
   () => getQueries().search,

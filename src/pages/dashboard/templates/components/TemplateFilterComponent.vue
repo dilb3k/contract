@@ -5,7 +5,6 @@
       :placeholder="t('SEARCH')"
       allow-clear
       size="large"
-      style="width: 200px"
       @input="handleSearch"
     />
     <a-button type="primary" size="large" @click="openCreateModal">
@@ -34,7 +33,7 @@ const searchQuery = ref(getQueries().search || '')
 
 const handleSearch = debounce(() => {
   const query = {
-    page: 0,
+    page: 1,
     size: templateStore.templates.size,
     search: searchQuery.value?.trim() || undefined
   }
@@ -85,8 +84,7 @@ const openCreateModal = () => {
 <style scoped lang="scss">
 @import '@/assets/styles/variable.scss';
 .template-filters {
-  margin-bottom: 16px;
-  margin-left: 2px;
+  margin: 0 2px 16px 2px;
 }
 :deep(.ant-btn-primary) {
   background-color: $primary;

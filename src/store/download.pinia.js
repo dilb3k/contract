@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ApiGetDownloadInfo, ApiDownloadDocument, ApiCreateDownloadInfo } from '@/api/download.api.js';
+import { ApiGetDownloadInfo, ApiDownloadDocument, ApiCreateDownloadInfo, ApiDownloadContracts, ApiDeleteDownload } from '@/api/download.api.js';
 
 export const useDownload = defineStore('Download', {
     state: () => ({
@@ -53,6 +53,24 @@ export const useDownload = defineStore('Download', {
                 throw error;
             } finally {
                 this.activeDownloads.delete(id);
+            }
+        },
+        async getDownloadContracts(downloadId) {
+            try {
+                const response = await ApiDownloadContracts(downloadId);
+
+                return response.data
+            } catch (error) {
+                throw error
+            }
+        },
+        async deleteDownload(downloadId) {
+            try {
+                const response = await ApiDeleteDownload(downloadId);
+
+                return response.data
+            } catch (error) {
+                throw error
             }
         },
         extractFilenameFromResponse(response, format) {

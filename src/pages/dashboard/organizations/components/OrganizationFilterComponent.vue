@@ -4,14 +4,14 @@
       v-model:value="searchText"
       :placeholder="t('SEARCH')"
       allow-clear
-      size="large"
-      style="width: 200px"
+      :size="size"
+      :style="{ width: inputWidth }"
       :disabled="organizationStore.organizationLoader"
       @input="handleSearch"
     />
     <a-button
       type="primary"
-      size="large"
+      :size="size"
       :disabled="organizationStore.organizationLoader"
       @click="openCreateModal"
     >
@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 import useQueryParams from '@/composables/useQueryParams'
@@ -33,9 +33,29 @@ import OrganizationFormComponent from './form/OrganizationFormComponent.vue'
 
 const { t } = useI18n()
 const { getQueries, setQueries } = useQueryParams()
-const { open, close } = useModal()
+const { open } = useModal()
 const organizationStore = useOrganization()
 const searchText = ref(getQueries().search || '')
+const size = ref('large')
+const inputWidth = ref('200px')
+
+const updateSize = () => {
+  if (window.innerWidth < 568) {
+    inputWidth.value = '120px'
+  } else {
+    size.value = 'large'
+    inputWidth.value = '200px'
+  }
+}
+
+onMounted(() => {
+  updateSize()
+  window.addEventListener('resize', updateSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateSize)
+})
 
 const handleSearch = debounce(() => {
   const query = {
@@ -62,7 +82,7 @@ const openCreateModal = () => {
   setQueries({ page: 1, size: 10, search: '' }, { saveHistory: false })
   open({
     title: t('OrganizationView.create'),
-    width: 800,
+    width: 500,
     component: OrganizationFormComponent,
     props: { modalKey: Date.now() }
   })
@@ -74,9 +94,7 @@ const openCreateModal = () => {
 .organization-filters {
   display: flex;
   gap: 12px;
-  margin-left: 2px;
-  margin-top: 2px;
-  margin-bottom: 16px;
+  margin: 0px 2px 16px 2px;
 }
 :deep(.ant-btn-primary) {
   background-color: $primary;

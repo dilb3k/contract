@@ -37,7 +37,9 @@
         @change="handleFileChange"
       >
         <a-button type="primary" :loading="loading">
-          <icon-upload />
+          <template #icon>
+            <icon-upload />
+          </template>
           {{ t('TemplatesView.UploadFile') }}
         </a-button>
       </a-upload>
@@ -168,6 +170,7 @@ const handleSubmit = async () => {
 :deep(.ant-btn-primary) {
   background-color: $primary;
   border-color: $primary;
+  gap: 4px;
   &:hover {
     background-color: darken($primary, 5%);
     border-color: darken($primary, 5%);

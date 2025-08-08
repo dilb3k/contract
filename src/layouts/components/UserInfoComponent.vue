@@ -1,5 +1,5 @@
 <template>
-  <div class="user-info">
+  <div class="user-info" :key="renderKey">
     <a-menu class="user-info-menu" :selectable="false">
       <a-menu-item @click="openProfileForm" class="menu-item">
         <div class="menu-content">
@@ -22,7 +22,7 @@
         <a-menu-item class="menu-item">
           <div class="menu-content">
             <icon-logout />
-            <span class="menu-text">{{ t('LOG_OUT') }}</span>
+            <span class="menu-text text-red-600">{{ t('LOG_OUT') }}</span>
           </div>
         </a-menu-item>
       </a-popconfirm>
@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { shallowRef } from 'vue'
+import { shallowRef, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import useModal from '@/composables/useModal.js'
@@ -94,18 +94,25 @@ import IconUser from '../../components/icons/outline/IconUser.vue'
 import IconLock from '../../components/icons/outline/IconKey.vue'
 import IconEn from '../../components/icons/lang/IconEn.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { open } = useModal()
 const corePinia = useCore()
 const userPinia = useUser()
 const { user } = storeToRefs(userPinia)
+const renderKey = ref(0)
 
 const logOut = () => {
+  window.onbeforeunload = null
   corePinia.logout()
+  setTimeout(() => {
+    window.location.reload(true)
+  })
 }
 
-const changeLanguage = (locale) => {
-  corePinia.changeLocale(locale)
+const changeLanguage = (newLocale) => {
+  locale.value = newLocale
+  corePinia.setLocale(newLocale)
+  renderKey.value += 1
 }
 
 const getCurrentLanguageIcon = () => {
@@ -160,11 +167,11 @@ function openPasswordForm() {
 
 <style lang="scss" scoped>
 .user-info {
+  width: 300px;
   .user-info-menu {
     border: none;
     box-shadow: none;
     background: transparent;
-
     .menu-item {
       padding: 8px 12px;
       margin-bottom: 2px;
@@ -179,7 +186,6 @@ function openPasswordForm() {
         align-items: center;
         gap: 8px;
         width: 180px;
-
         .menu-icon {
           width: 16px;
           height: 16px;
@@ -188,7 +194,6 @@ function openPasswordForm() {
 
         .menu-text {
           font-size: 14px;
-          color: #333;
           font-weight: 500;
         }
 

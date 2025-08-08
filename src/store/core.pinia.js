@@ -1,6 +1,4 @@
-
 import { defineStore } from 'pinia'
-import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 export const useCore = defineStore('core', {
@@ -25,10 +23,9 @@ export const useCore = defineStore('core', {
       this.collapsed = !this.collapsed
       localStorage.setItem('collapsed', JSON.stringify(this.collapsed))
     },
-    changeLocale(locale) {
-      const i18n = useI18n()
+    setLocale(locale) {
+      this.locale = locale
       localStorage.setItem('lang', locale)
-      i18n.locale.value = locale
     },
     redirect(url = null) {
       if (url) {

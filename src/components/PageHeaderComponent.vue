@@ -76,4 +76,20 @@ function handleBack() {
   font-weight: 700 !important;
   line-height: 40px !important;
 }
+@media (max-width: 760px) {
+  .ant-page-header-heading-title {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    line-height: 40px !important;
+    padding: 0px !important;
+  }
+}
+@media (max-width: 460px) {
+  .ant-page-header-heading-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 40px !important;
+    padding: 0px !important;
+  }
+}
 </style>

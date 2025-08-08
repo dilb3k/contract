@@ -69,6 +69,7 @@ export const ru = {
     TemplatesView: {
         name: 'Название',
         elements: 'Элементы',
+        title: 'Название шаблона',
         show: 'Просмотреть Шаблон',
         info: 'Информация О Шаблоне',
         create: 'Добавить Шаблон',
@@ -89,7 +90,8 @@ export const ru = {
         success: 'Файл Успешно Загружен',
         status: 'Статус',
         fileType: 'Тип Файла',
-        date: 'Дата Создания'
+        date: 'Дата Создания',
+        fileCount: 'Количество файлов'
     },
     status: {
         CREATED: 'Загружается',
@@ -116,7 +118,9 @@ export const ru = {
         usersEdited: 'Операторы Успешно Обновлены',
         enterName: 'Введите Название Контракта',
         INVALID_ID: 'Неверный Id Контракта',
-        noFields: 'Поля Контракта Пусты'
+        noFields: 'Поля Контракта Пусты',
+        required: "Обязательно",
+        optional: "Необязательно"
     },
     OrganizationView: {
         name: 'Организации',

@@ -13,8 +13,12 @@ export const useTemplate = defineStore('Template', {
             this.templateLoader = true;
             try {
                 const response = await ApiGetAllTemplates(page, size, search);
+                console.log('ApiGetAllTemplates response:', response);
+                console.log('response.data:', response.data);
                 this.templates = response.data;
+                return this.templates; 
             } catch (error) {
+                console.error('Error in getAllTemplates:', error);
                 throw error;
             } finally {
                 this.templateLoader = false;
@@ -132,16 +136,15 @@ export const useTemplate = defineStore('Template', {
             this.templateLoader = true;
             try {
                 const response = await ApiGetSampleFields(sampleId);
+                console.log('API response:', response);
                 this.selectedTemplate = response.data;
                 return response.data;
             } catch (error) {
+                console.error('Error fetching sample fields:', error);
                 throw error;
             } finally {
                 this.templateLoader = false;
             }
-        },
-        resetSelectedTemplate() {
-            this.selectedTemplate = null;
-        },
+        }
     },
 }); 

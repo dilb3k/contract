@@ -18,22 +18,21 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useDownload } from '@/store/download.pinia'
 import DownloadFilters from './components/DownloadFilterComponent.vue'
 import DownloadTable from './components/DownloadTableComponent.vue'
 import PageHeader from '@/components/PageHeaderComponent.vue'
 
 const { t } = useI18n()
 const route = useRoute()
-const downloadStore = useDownload()
 
 watch(
   () => route.query,
   (query) => {
     const page = Number(query.page) > 0 ? Number(query.page) - 1 : 0
-    const size = [10, 20, 50].includes(Number(query.size)) ? Number(query.size) : 10
+    const size = [10, 20, 50].includes(Number(query.size))
+      ? Number(query.size)
+      : 10
     const status = query.status || undefined
-    downloadStore.getAllDownloads({ page, size, status })
   },
   { immediate: true, deep: true }
 )
@@ -50,7 +49,7 @@ watch(
   display: none;
 }
 
-@media (max-width: 864px) {
+@media (max-width: 964px) {
   .desktop-filters {
     display: none;
   }

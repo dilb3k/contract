@@ -5,7 +5,6 @@
       size="large"
       :options="statusOptions"
       :placeholder="t('SELECT_STATUS')"
-      class="status-select"
       allow-clear
       @change="handleSearch"
     />
@@ -28,6 +27,7 @@ import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 import { useDownload } from '@/store/download.pinia'
 import useQueryParams from '@/composables/useQueryParams.js'
+import IconRefresh from '@/components/icons/outline/IconRefresh.vue'
 
 const { t } = useI18n()
 const downloadStore = useDownload()
@@ -42,23 +42,33 @@ const statusOptions = [
 
 const handleSearch = debounce(() => {
   const query = {
-    page: 0,
+    page: 1,
     size: 10,
     status: selectedStatus.value || undefined
   }
   setQueries(query, { saveHistory: false })
 }, 300)
+import { useRoute } from 'vue-router'
 
-const handleRefresh = debounce(async () => {
+const route = useRoute()
+
+const handleRefresh = debounce(() => {
   try {
-    const query = {
-      page: 0,
-      size: 10,
-      status: undefined 
-    }
-    selectedStatus.value = null 
-    setQueries(query, { saveHistory: false })
-    await downloadStore.getAllDownloads(query)
+    const currentQuery = { ...route.query }
+
+    const page = Number(currentQuery.page) > 0 ? Number(currentQuery.page) : 1
+    const size = [10, 20, 50].includes(Number(currentQuery.size))
+      ? Number(currentQuery.size)
+      : 10
+    const status = currentQuery.status || undefined
+
+    selectedStatus.value = null
+
+    downloadStore.getAllDownloads({
+      page: page - 1,
+      size,
+      status
+    })
   } catch (error) {
     message.error(t('notification_component.error_fetch_downloads'))
   }
@@ -89,8 +99,7 @@ watch(
 .contracts-filters {
   display: flex;
   gap: 16px;
-  padding-bottom: 16px;
-  margin-left: 2px;
+  margin: 0px 2px 16px 2px;
 }
 
 :deep(.ant-select) {

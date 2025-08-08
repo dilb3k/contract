@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import useValidation from '@/composables/validations.js'
+import useValidation from '@/composables/useValidation.js'
 import useAuth from '@/store/auth.pinia.js'
 import { storeToRefs } from 'pinia'
 

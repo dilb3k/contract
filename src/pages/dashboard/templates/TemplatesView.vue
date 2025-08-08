@@ -53,7 +53,7 @@ watch(
 .mobile-filters {
   display: none;
 }
-@media (max-width: 864px) {
+@media (max-width: 964px) {
   .desktop-filters {
     display: none;
   }

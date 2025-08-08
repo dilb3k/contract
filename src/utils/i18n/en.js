@@ -71,6 +71,7 @@ export const en = {
         elements: 'Elements',
         show: 'View Template',
         info: 'Template Information',
+        title: 'Template name',
         create: 'Add Template',
         edit: 'Edit Template',
         edit_fields: 'Edit Fields',
@@ -89,7 +90,8 @@ export const en = {
         success: 'File Successfully Downloaded',
         status: 'Status',
         fileType: 'File Type',
-        date: 'Creation Date'
+        date: 'Creation Date',
+        fileCount:' Number of files'
     },
     status: {
         CREATED: 'Downloading',
@@ -116,7 +118,9 @@ export const en = {
         usersEdited: 'Operators Successfully Updated',
         enterName: 'Enter Contract Name',
         INVALID_ID: 'Invalid Contract Id',
-        noFields: 'Contract Fields Are Empty'
+        noFields: 'Contract Fields Are Empty',
+        required: "Required",
+        optional: "Optional"
     },
     OrganizationView: {
         name: 'Organizations',

@@ -39,7 +39,11 @@
     >
       <template #bodyCell="{ column, record, index }">
         <template v-if="column.dataIndex === 'ni'">
-          {{ index + 1 + users.pageable.pageNumber * users.pageable.pageSize }}
+          {{
+            index +
+            1 +
+            (users.pageable?.pageNumber * users.pageable?.pageSize || 0)
+          }}
         </template>
         <template v-if="column.dataIndex === 'fullName'">
           {{ record.fullName || 'N/A' }}
@@ -96,10 +100,11 @@
     <pagination-component
       v-if="users.totalElements > 0"
       :total="users.totalElements"
-      :page="users.pageable.pageNumber + 1"
-      :size="users.pageable.pageSize"
+      :current="Number(users.pageable?.pageNumber ?? 0) + 1"
+      :page-size="users.pageable?.pageSize || 10"
+      :disabled="userStore.permissionLoader"
+      @change="handlePageChange"
       @change-size="handleSizeChange"
-      @change-page="handlePageChange"
     />
   </div>
 </template>
@@ -137,15 +142,19 @@ const normalizedUsers = computed(() => {
   }))
 })
 
-const fetchUsers = async (page = 1, size = 10) => {
+const fetchUsers = async (page = 0, size = 10, search = null, status = null, role = null) => {
+  if (!targetId.value) {
+    message.error(t('notification_component.target_not_selected'))
+    return
+  }
   try {
     await userStore.getTemplateUsers({
-      page: page - 1,
+      page,
       targetId: targetId.value,
       size,
-      search: searchText.value.trim() || null,
-      status: statusFilter.value || null,
-      role: roleFilter.value || null
+      search: search?.trim() || null,
+      status: status || null,
+      role: role || null
     })
   } catch (error) {
     message.error(t('notification_component.error_fetch_users'))
@@ -153,12 +162,36 @@ const fetchUsers = async (page = 1, size = 10) => {
   }
 }
 
+const syncQueryParams = async () => {
+  const page = parseInt(route.query.page, 10) || 1
+  const size = parseInt(route.query.size, 10) || 10
+  const search = route.query.search || null
+  const status = route.query.status || null
+  const role = route.query.role || null
+  const backendPage = Math.max(0, page - 1)
+
+  if (
+    !users.value?.content ||
+    users.value.content.length === 0 ||
+    backendPage !== users.value.pageable.pageNumber ||
+    size !== users.value.pageable.pageSize ||
+    search !== (route.query.search || null) ||
+    status !== (route.query.status || null) ||
+    role !== (route.query.role || null)
+  ) {
+    await fetchUsers(backendPage, size, search, status, role)
+  }
+}
+
 const handleSearch = debounce(() => {
-  const query = searchText.value.trim()
-    ? { search: searchText.value.trim() }
-    : {}
+  const query = {
+    ...(searchText.value.trim() && { search: searchText.value.trim() }),
+    ...(roleFilter.value && { role: roleFilter.value }),
+    ...(statusFilter.value && { status: statusFilter.value }),
+    page: 1
+  }
   router.replace({ query })
-  fetchUsers(1, users.value.pageable.pageSize)
+  fetchUsers(0, users.value.pageable?.pageSize || 10, searchText.value.trim(), statusFilter.value, roleFilter.value)
 }, 300)
 
 const togglePermission = async (record, permission, checked) => {
@@ -199,9 +232,12 @@ const togglePermission = async (record, permission, checked) => {
           })
     )
 
-    fetchUsers(
-      users.value.pageable.pageNumber + 1,
-      users.value.pageable.pageSize
+    await fetchUsers(
+      users.value.pageable?.pageNumber || 0,
+      users.value.pageable?.pageSize || 10,
+      searchText.value.trim(),
+      statusFilter.value,
+      roleFilter.value
     )
   } catch (error) {
     message.error(t('notification_component.error_updating_permission'))
@@ -211,28 +247,34 @@ const togglePermission = async (record, permission, checked) => {
   }
 }
 
-const handleSizeChange = (size) => {
-  fetchUsers(1, size)
+const handleSizeChange = async (size) => {
+  try {
+    await router.push({ query: { ...route.query, size, page: 1 } })
+    await fetchUsers(0, size, searchText.value.trim(), statusFilter.value, roleFilter.value)
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Page size change error:', error)
+  }
 }
 
-const handlePageChange = (page) => {
-  fetchUsers(page, users.value.pageable.pageSize)
+const handlePageChange = async (page) => {
+  try {
+    await router.push({ query: { ...route.query, page } })
+    await fetchUsers(page - 1, users.value.pageable?.pageSize || 10, searchText.value.trim(), statusFilter.value, roleFilter.value)
+  } catch (error) {
+    message.error(t('notification_component.error_updating_pagination'))
+    console.error('Page change error:', error)
+  }
 }
 
 onMounted(() => {
-  const query = route.query
-  searchText.value = query.search || ''
-  fetchUsers()
+  syncQueryParams()
 })
 
 watch(
   () => route.query,
-  (newQuery) => {
-    if (searchText.value !== (newQuery.search || '')) {
-      searchText.value = newQuery.search || ''
-      fetchUsers(1, users.value.pageable.pageSize)
-    }
-  }
+  () => syncQueryParams(),
+  { deep: true }
 )
 
 const userColumns = computed(() => [
@@ -241,7 +283,7 @@ const userColumns = computed(() => [
   { title: t('PermissionUsers.username'), dataIndex: 'username' },
   {
     title: t('PermissionUsers.role'),
-    dataIndex: 'role',
+    dataIndex:'role',
     width: 150,
     align: 'center'
   },

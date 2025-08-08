@@ -1,7 +1,7 @@
-
 import { defineStore } from 'pinia'
 import { useCore } from '@/store/core.pinia.js'
 import { ApiLogin } from '@/api/auth.api.js'
+import { message } from 'ant-design-vue'
 
 const useAuth = defineStore('Auth', {
   state: () => ({
@@ -22,19 +22,13 @@ const useAuth = defineStore('Auth', {
         localStorage.setItem('refresh_token', data.refresh_token || data.token)
         this.isAuthenticated = true
         this.user = data.user
-        core.setToast({
-          type: 'success',
-          locale: 'LoginView.loginSuccess'
-        })
+        message.success('Tizimga muvaffaqiyatli kirdingiz!')
         setTimeout(() => {
           core.redirect('/dashboard')
         }, 100)
       } catch (error) {
         const errorMessage = error.response?.data?.message || core.getStatusMessage(error.response?.status)
-        core.setToast({
-          type: 'error',
-          message: errorMessage
-        })
+        message.error(errorMessage)
       } finally {
         this.loginLoader = false
       }
@@ -45,6 +39,7 @@ const useAuth = defineStore('Auth', {
       localStorage.removeItem('refresh_token')
       this.isAuthenticated = false
       this.user = null
+      message.info('Tizimdan chiqdingiz')
       core.redirect('/auth/login')
     },
     checkAuth() {

@@ -129,12 +129,6 @@ const sortField = ref('fullName')
 const sortDirection = ref('DESC')
 const isSearching = ref(false)
 
-const organizationId = computed(() => {
-  return user.value.role === 'DIRECTOR'
-    ? user.value.organization?.id
-    : Number(route.params.id) || null
-})
-
 const users = computed(() => {
   const defaultUsers = { content: [], page: 0, size: 10, totalElements: 0 }
   const storeUsers = organizationStore.users || defaultUsers
@@ -177,7 +171,6 @@ const fetchUsers = async () => {
     const backendPage = currentPage - 1
 
     await organizationStore.fetchOrganizationUsers(
-      user.value.role === 'DIRECTOR' ? 'ADMIN' : organizationId.value,
       searchText.value?.trim() || null,
       currentSize,
       backendPage,
@@ -200,7 +193,6 @@ const editUser = (userData) => {
     component: UserForm,
     type: 'user-form',
     props: {
-      orgId: organizationId.value,
       userData: { ...userData, status: userData.status === 'ACTIVE' },
       isProfileEdit: false
     }
@@ -209,7 +201,7 @@ const editUser = (userData) => {
 
 const deleteUser = async (userData) => {
   try {
-    await organizationStore.deleteUser(userData.id, organizationId.value)
+    await organizationStore.deleteUser(userData.id)
     message.success(t('UserOrganizationView.deleted'))
     await fetchUsers()
   } catch (error) {
@@ -232,11 +224,7 @@ const handleRoleChange = async (userId, role) => {
       status: originalStatus
     }
 
-    await organizationStore.updateUser(
-      userId,
-      updatePayload,
-      organizationId.value
-    )
+    await organizationStore.updateUser(userId, updatePayload)
     message.success(t('notification_component.role_updated'))
 
     await fetchUsers()
@@ -265,11 +253,7 @@ const handleStatusChange = async (userId, checked) => {
 
     const statusValue = checked ? 'ACTIVE' : 'INACTIVE'
 
-    await organizationStore.updateUser(
-      userId,
-      { status: statusValue },
-      organizationId.value
-    )
+    await organizationStore.updateUser(userId, { status: statusValue })
 
     message.success(t('notification_component.success'))
   } catch (error) {
@@ -327,13 +311,6 @@ const initializeFiltersFromUrl = () => {
 }
 
 watch(
-  () => organizationId.value,
-  (newId, oldId) => {
-    if (newId && newId !== oldId) fetchUsers()
-  }
-)
-
-watch(
   () => route.query,
   (newQuery, oldQuery) => {
     if (JSON.stringify(newQuery) === JSON.stringify(oldQuery)) return
@@ -357,7 +334,7 @@ watch(
 
 onMounted(() => {
   initializeFiltersFromUrl()
-  if (organizationId.value) fetchUsers()
+  fetchUsers()
 })
 
 const userColumns = computed(() => {

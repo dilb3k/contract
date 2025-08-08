@@ -1,28 +1,14 @@
 <template>
   <div class="page-wrapper">
-    <page-header
-      :title="
-        user.role === 'DIRECTOR'
-          ? t('UserView.title')
-          : t('UserOrganizationView.name')
-      "
-      :back-icon="user.role === 'DIRECTOR' ? false : undefined"
-      @back="router.push('/dashboard/organizations')"
-    >
+    <page-header :title="t('UserView.title')">
       <template #actions>
         <div class="desktop-filters">
-          <user-filter-component
-            @addUser="showCreateUserModal"
-            @search="handleSearch"
-          />
+          <user-filter-component @addUser="showCreateUserModal" />
         </div>
       </template>
     </page-header>
     <div class="mobile-filters">
-      <user-filter-component
-        @addUser="showCreateUserModal"
-        @search="handleSearch"
-      />
+      <user-filter-component @addUser="showCreateUserModal" />
     </div>
     <user-table-component />
   </div>
@@ -62,7 +48,6 @@ const showCreateUserModal = () => {
 .page-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   margin-bottom: 16px;
 }
 

@@ -16,26 +16,8 @@
         <template v-if="column.dataIndex === 'name'">
           {{ record.name }}
         </template>
-        <template v-if="column.dataIndex === 'contract'">
-          <a-space>
-            <a-button
-              type="primary"
-              class="btn-contract"
-              block
-              @click="viewContracts(record)"
-            >
-              <template #icon><icon-document /></template>
-              {{ t('ContractsView.title') }}
-            </a-button>
-          </a-space>
-        </template>
         <template v-if="column.dataIndex === 'actions'">
           <a-space>
-            <a-tooltip :title="t('UserView.title')">
-              <a-button size="size" @click="viewUser(record)">
-                <template #icon><icon-users /></template>
-              </a-button>
-            </a-tooltip>
             <a-tooltip :title="t('EDIT')">
               <a-button size="size" @click="editOrganization(record)">
                 <template #icon><icon-edit /></template>
@@ -78,18 +60,15 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { debounce } from 'lodash-es'
 import PaginationComponent from '@/components/PaginationComponent.vue'
-import IconDocument from '@/components/icons/outline/IconOrganization.vue'
 import IconEdit from '@/components/icons/outline/IconEdit.vue'
 import IconDelete from '@/components/icons/outline/IconDelete.vue'
-import IconUsers from '@/components/icons/outline/IconUsers.vue'
 import OrganizationFormComponent from './form/OrganizationFormComponent.vue'
 import useModal from '@/composables/useModal'
 import { useOrganization } from '@/store/organization.pinia'
 import useQueryParams from '@/composables/useQueryParams'
 
 const { t } = useI18n()
-const router = useRouter()
-const { open, close } = useModal()
+const { open } = useModal()
 const organizationStore = useOrganization()
 const { getQueries } = useQueryParams()
 
@@ -97,12 +76,6 @@ const organizations = computed(() => organizationStore.organizations)
 const columns = [
   { title: '№', dataIndex: 'ni', width: 80, align: 'center' },
   { title: t('OrganizationView.name'), dataIndex: 'name' },
-  {
-    title: t('OrganizationView.view'),
-    dataIndex: 'contract',
-    width: 200,
-    align: 'center'
-  },
   { title: '', dataIndex: 'actions', width: 200, align: 'center' }
 ]
 
@@ -119,19 +92,6 @@ watch(
   }, 300),
   { immediate: true, deep: true }
 )
-
-const viewUser = (record) => {
-  if (organizationStore.organizationLoader) return
-  router.push({
-    name: 'OrganizationUsers',
-    params: { id: record.id }
-  })
-}
-
-const viewContracts = (record) => {
-  if (organizationStore.organizationLoader) return
-  router.push(`/dashboard/contracts/${record.id}`)
-}
 
 const editOrganization = (record) => {
   if (organizationStore.organizationLoader) return

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
@@ -28,43 +28,43 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
-const pages = reactive([
+const pages = [
   {
     path: 'users',
     key: 'users',
     name: 'UserView',
     label: t('document_title.UserView'),
-    icon: IconUsers
+    icon: markRaw(IconUsers)
   },
   {
     path: 'templates',
     key: 'templates',
     name: 'TemplatesView',
     label: t('document_title.TemplatesView'),
-    icon: IconCopy
+    icon: markRaw(IconCopy)
   },
   {
     path: 'contracts',
     key: 'contracts',
     name: 'ContractsView',
     label: t('document_title.ContractsView'),
-    icon: IconEdit
+    icon: markRaw(IconEdit)
   },
   {
     path: 'downloads',
     key: 'downloads',
     name: 'DownloadsView',
     label: t('document_title.DownloadsView'),
-    icon: IconDownload
+    icon: markRaw(IconDownload)
   },
   {
     path: 'organizations',
     key: 'organizations',
     name: 'OrganizationView',
     label: t('document_title.OrganizationView'),
-    icon: IconOrganization
+    icon: markRaw(IconOrganization)
   }
-])
+]
 
 const activeLink = computed(
   () => route?.path.replace('/dashboard/', '')?.split('/')?.[0]
@@ -74,7 +74,9 @@ const { user } = storeToRefs(userPinia)
 
 const menuList = computed(() => {
   if (user.value.role === 'ADMIN')
-    return pages.filter((item) => item.path === 'organizations')
+    return pages.filter((item) =>
+      ['organizations', 'users', 'contracts'].includes(item.path)
+    )
   if (user.value.role === 'DIRECTOR')
     return pages.filter((item) => item.path !== 'organizations')
   if (user.value.role === 'ROLE_DEV')
@@ -108,6 +110,7 @@ function hideTooltip() {
   currentTooltip.value = null
 }
 </script>
+
 <template>
   <div class="sidebar-menu-component">
     <div

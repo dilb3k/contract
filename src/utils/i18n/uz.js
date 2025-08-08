@@ -90,7 +90,8 @@ export const uz = {
     success: 'Fayl Muvaffaqiyatli Yuklab Olindi',
     status: 'Holati',
     fileType: 'Fayl Turi',
-    date: 'Yaratilgan Sana'
+    date: 'Yaratilgan Sana',
+    fileCount: 'Faylar soni'
   },
   status: {
     CREATED: 'Yuklab Olinmoqda',
@@ -117,7 +118,9 @@ export const uz = {
     usersEdited: 'Operatorlar Muvaffaqiyatli Oʻzgartirildi',
     enterName: 'Shartnoma Nomini Kiriting',
     INVALID_ID: 'Noto‘g‘ri Shartnoma Id',
-    noFields: 'Shartnoma Maydonlari Bo\'sh'
+    noFields: 'Shartnoma Maydonlari Bo\'sh',
+    required: "Majburiy",
+    optional: "Ixtiyoriy"
   },
   OrganizationView: {
     name: 'Organizatsiyalar',
@@ -239,7 +242,7 @@ export const uz = {
   UPLOAD_ERROR: 'Fayl Yuklashda Xatolik',
   FILE_TOO_LARGE: 'Fayl Hajmi 5mb Dan Kichik Boʻlishi Kerak',
   MAX_LENGTH_24: "Maydon uzunligi 24 belgidan oshmasligi kerak",
-  PDF: 'Pdf',
+  PDF: 'PDF',
   DOCX: 'Docx',
   VIEW_FILE: 'Shablon Ko\'rish',
   JSON: 'Json',

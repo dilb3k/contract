@@ -37,7 +37,7 @@ const { t } = useI18n()
 .mobile-filter {
   display: none;
 }
-@media (max-width: 1264px) {
+@media (max-width: 964px) {
   .desktop-filter {
     display: none;
   }

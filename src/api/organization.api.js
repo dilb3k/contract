@@ -38,7 +38,6 @@ export const ApiDeleteOrganization = (orgId) =>
     });
 
 export const ApiGetOrganizationUsers = (
-    orgId,
     page = 0,
     size = 10,
     search = null,
@@ -58,16 +57,12 @@ export const ApiGetOrganizationUsers = (
             status: status !== null ? (status ? 'ACTIVE' : 'INACTIVE') : undefined,
             sortField,
             orderDirection: sortDirection,
-            organizationId: orgId && orgId !== 'ME' && orgId !== 'ADMIN' ? orgId : undefined,
         },
         headers: getCommonHeaders(),
     });
 
-export const ApiCreateUser = (form, orgId) => {
-    const payload = {
-        ...form,
-        organizationId: orgId && orgId !== 'ME' ? orgId : undefined,
-    }
+export const ApiCreateUser = (form) => {
+    const payload = { ...form }
     if (typeof form.status === 'boolean') {
         payload.status = form.status ? 'ACTIVE' : 'INACTIVE'
     } else if (form.status) {
@@ -84,11 +79,8 @@ export const ApiCreateUser = (form, orgId) => {
     })
 }
 
-export const ApiUpdateUser = (userId, form, orgId) => {
-    const payload = {
-        ...form,
-        organizationId: orgId && orgId !== 'ME' ? orgId : undefined,
-    }
+export const ApiUpdateUser = (userId, form) => {
+    const payload = { ...form }
     if ('status' in form) {
         if (typeof form.status === 'boolean') {
             payload.status = form.status ? 'ACTIVE' : 'INACTIVE'

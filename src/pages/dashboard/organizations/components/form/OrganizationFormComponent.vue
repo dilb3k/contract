@@ -5,29 +5,40 @@
     layout="vertical"
     @finish="handleSubmit"
   >
-    <a-form-item
-      :label="t('OrganizationView.organization_name')"
-      name="name"
-      :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
-    >
-      <a-input
-        v-model:value="formState.name"
-        :placeholder="t('OrganizationView.enter_name')"
-      />
-    </a-form-item>
-    <a-form-item
-      :label="t('OrganizationView.identifier_number')"
-      name="identifierNumber"
-      :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
-    >
-      <a-input
-        v-model:value="formState.identifierNumber"
-        :placeholder="t('OrganizationView.enter_identifier_number')"
-      />
-    </a-form-item>
+    <div class="flex items-center w-full justify-between flex-wrap">
+      <a-form-item
+        :label="t('OrganizationView.organization_name')"
+        name="name"
+        :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
+      >
+        <a-input
+          v-model:value="formState.name"
+          :placeholder="t('OrganizationView.enter_name')"
+          size="large"
+        />
+      </a-form-item>
+      <a-form-item
+        :label="t('OrganizationView.identifier_number')"
+        name="identifierNumber"
+        :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
+      >
+        <a-input
+          v-model:value="formState.identifierNumber"
+          :placeholder="t('OrganizationView.enter_identifier_number')"
+          size="large"
+        />
+      </a-form-item>
+    </div>
     <div class="form-actions">
-      <a-button @click="closeModal">{{ t('CANCEL') }}</a-button>
-      <a-button type="primary" html-type="submit" :loading="loading">
+      <a-button danger size="large" @click="closeModal">{{
+        t('CANCEL')
+      }}</a-button>
+      <a-button
+        type="primary"
+        html-type="submit"
+        :loading="loading"
+        size="large"
+      >
         {{ t('SAVE') }}
       </a-button>
     </div>
@@ -82,7 +93,10 @@ const handleSubmit = async () => {
     }
 
     if (props.organizationData) {
-      await organizationStore.editOrganization(props.organizationData.id, payload)
+      await organizationStore.editOrganization(
+        props.organizationData.id,
+        payload
+      )
       message.success(t('OrganizationView.edited'))
     } else {
       await organizationStore.createOrganization(payload)
@@ -97,20 +111,24 @@ const handleSubmit = async () => {
     })
 
     if (!props.organizationData) {
-      await setQueries({ page: 1, size: 10, search: '' }, { saveHistory: false })
+      await setQueries(
+        { page: 1, size: 10, search: '' },
+        { saveHistory: false }
+      )
     }
 
     closeModal()
   } catch (error) {
     console.error('Submit Error:', error)
     message.error(
-      error?.response?.data?.message || error?.message || t('notification_component.error')
+      error?.response?.data?.message ||
+        error?.message ||
+        t('notification_component.error')
     )
   } finally {
     loading.value = false
   }
 }
-
 </script>
 
 <style scoped lang="scss">
@@ -130,8 +148,6 @@ const handleSubmit = async () => {
   }
 }
 :deep(.ant-input) {
-  border-color: #d9d9d9;
-  border-radius: 4px;
   &:focus {
     border-color: $primary;
     box-shadow: 0 0 0 2px rgba($primary, 0.2);

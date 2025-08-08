@@ -1,44 +1,53 @@
 <template>
   <div class="organization-filters">
-    <a-input
-      v-model:value="searchTextLocal"
-      :placeholder="t('SEARCH')"
-      allow-clear
-      size="large"
-      style="width: 200px"
-      @input="debouncedSearch"
-      @clear="handleSearchClear"
-    />
-    <a-select
-      v-model:value="roleFilterLocal"
-      :placeholder="t('OrganizationView.select_role')"
-      size="large"
-      allow-clear
-      @change="handleFilterChange"
-      v-if="user?.role === 'DIRECTOR'"
-    >
-      <a-select-option value="DIRECTOR">{{
-        t('ROLE_DIRECTOR')
-      }}</a-select-option>
-      <a-select-option value="OPERATOR">{{
-        t('ROLE_OPERATOR')
-      }}</a-select-option>
-    </a-select>
-    <a-select
-      v-model:value="statusFilterLocal"
-      :placeholder="t('SELECT_STATUS')"
-      size="large"
-      allow-clear
-      @change="handleFilterChange"
-      v-if="user?.role === 'DIRECTOR'"
-    >
-      <a-select-option :value="true">{{ t('ACTIVE') }}</a-select-option>
-      <a-select-option :value="false">{{ t('IN_ACTIVE') }}</a-select-option>
-    </a-select>
-    <a-button size="large" type="primary" @click="$emit('addUser')">
-      <template #icon><icon-plus /></template>
-      {{ t('UserOrganizationView.create') }}
-    </a-button>
+    <div class="organization-filters-container">
+      <a-input
+        v-model:value="searchTextLocal"
+        :placeholder="t('SEARCH')"
+        allow-clear
+        size="large"
+        style="width: 200px"
+        @input="debouncedSearch"
+        @clear="handleSearchClear"
+      />
+      <a-select
+        v-model:value="roleFilterLocal"
+        :placeholder="t('OrganizationView.select_role')"
+        size="large"
+        allow-clear
+        @change="handleFilterChange"
+        v-if="user?.role === 'DIRECTOR'"
+        style="width: 160px"
+      >
+        <a-select-option value="DIRECTOR">{{
+          t('ROLE_DIRECTOR')
+        }}</a-select-option>
+        <a-select-option value="OPERATOR">{{
+          t('ROLE_OPERATOR')
+        }}</a-select-option>
+      </a-select>
+      <a-select
+        v-model:value="statusFilterLocal"
+        :placeholder="t('SELECT_STATUS')"
+        size="large"
+        allow-clear
+        @change="handleFilterChange"
+        v-if="user?.role === 'DIRECTOR'"
+        style="width: 160px"
+      >
+        <a-select-option :value="true">{{ t('ACTIVE') }}</a-select-option>
+        <a-select-option :value="false">{{ t('IN_ACTIVE') }}</a-select-option>
+      </a-select>
+      <a-button
+        size="large"
+        type="primary"
+        @click="$emit('addUser')"
+        style="min-width: 140px"
+      >
+        <template #icon><icon-plus /></template>
+        {{ t('UserOrganizationView.create') }}
+      </a-button>
+    </div>
   </div>
 </template>
 
@@ -168,6 +177,8 @@ const updateUrlParams = () => {
 
   const query = { ...route.query }
 
+  query.page = 1
+
   if ((searchTextLocal.value || '').trim()) {
     query.search = searchTextLocal.value.trim()
   } else {
@@ -210,10 +221,58 @@ onMounted(async () => {
 @import '@/assets/styles/variable.scss';
 
 .organization-filters {
+  position: relative;
+  margin: 0px 2px 16px 2px;
+}
+.organization-filters-container {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
-  margin-left: 2px;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 3px;
+    transition: background-color 0.5s ease;
+  }
+
+  &::-webkit-scrollbar-button {
+    width: 0;
+    height: 0;
+    display: none;
+    background: none;
+  }
+
+  &::-webkit-scrollbar-corner {
+    display: none;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: lighten($primary, 20%);
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: lighten($primary, 20%) transparent;
+
+  > * {
+    flex-shrink: 0;
+  }
+}
+
+:deep(.ant-btn-primary) {
+  background-color: $primary;
+  color: $white;
+
+  &:hover {
+    background-color: lighten($primary, 5%);
+  }
+
+  &:active {
+    background-color: lighten($primary, 2%);
+  }
 }
 
 :deep(.ant-btn-primary) {

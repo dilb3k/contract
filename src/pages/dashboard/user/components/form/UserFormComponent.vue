@@ -6,6 +6,21 @@
     autocomplete="off"
   >
     <a-form-item
+      :label="t('UserView.organization')"
+      name="organizationId"
+      :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
+    >
+      <a-select
+        v-model:value="formState.organizationId"
+        :placeholder="t('OrganizationView.select_organization')"
+        show-search
+        :filter-option="filterOption"
+        :options="organizations"
+        :loading="loadingOrganizations"
+        @focus="fetchOrganizations"
+      />
+    </a-form-item>
+    <a-form-item
       :label="t('UserView.firstName')"
       name="fullName"
       :rules="[{ required: true, message: t('REQUIRED_FIELD') }]"
@@ -64,7 +79,6 @@
         </a-select-option>
       </a-select>
     </a-form-item>
-
     <a-form-item
       v-if="props.userData && !isProfileEdit"
       :label="t('UserView.status')"
@@ -82,30 +96,26 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useOrganization } from '@/store/organization.pinia'
-import { useUser } from '@/store/user.pinia'
 import useModal from '@/composables/useModal'
-import { useRoute } from 'vue-router'
 
 const { t } = useI18n()
 const { close } = useModal()
 const organizationStore = useOrganization()
-const userStore = useUser()
-const { user } = storeToRefs(userStore)
-const route = useRoute()
 
 const props = defineProps({
-  orgId: { type: Number, default: null },
   userData: { type: Object, default: null },
   modalKey: { type: Number, default: null },
   isProfileEdit: { type: Boolean, default: false }
 })
 
 const loading = ref(false)
+const loadingOrganizations = ref(false)
+const organizations = ref([])
 
 const defaultFormState = {
   fullName: '',
@@ -118,19 +128,15 @@ const defaultFormState = {
 
 const formState = reactive({ ...defaultFormState })
 
-const organizationId = computed(
-  () => props.orgId || user.value.organization?.id || route.params.id
-)
-
 watch(
-  () => [props.userData, organizationId.value],
-  ([newUserData, newOrgId]) => {
+  () => props.userData,
+  (newUserData) => {
     formState.fullName = newUserData?.fullName || ''
     formState.username = newUserData?.username || ''
     if (!props.isProfileEdit) {
       formState.role = newUserData?.role || ''
     }
-    formState.organizationId = newOrgId
+    formState.organizationId = newUserData?.organizationId || null
     formState.password = ''
     const rawStatus = newUserData?.status
     formState.status =
@@ -141,12 +147,32 @@ watch(
   { immediate: true }
 )
 
+const fetchOrganizations = async () => {
+  if (organizations.value.length > 0) return
+  loadingOrganizations.value = true
+  try {
+    const response = await organizationStore.getAllOrganizations({ page: 0, size: 100 })
+    organizations.value = response.content.map(org => ({
+      value: org.id,
+      label: org.name
+    }))
+  } catch (error) {
+    message.error(t('notification_component.error_fetch_organizations'))
+  } finally {
+    loadingOrganizations.value = false
+  }
+}
+
+const filterOption = (input, option) => {
+  return option.label.toLowerCase().includes(input.toLowerCase())
+}
+
 const closeModal = () => {
   close(props.modalKey)
 }
 
 const handleSubmit = async () => {
-  if (!organizationId.value && !props.isProfileEdit) {
+  if (!formState.organizationId && !props.isProfileEdit) {
     message.error(t('notification_component.organization_not_selected'))
     return
   }
@@ -156,7 +182,8 @@ const handleSubmit = async () => {
 
     const updatePayload = {
       fullName: formState.fullName,
-      username: formState.username
+      username: formState.username,
+      organizationId: formState.organizationId
     }
 
     if (!props.isProfileEdit) {
@@ -168,15 +195,12 @@ const handleSubmit = async () => {
       const hasUserChanges =
         updatePayload.fullName !== props.userData.fullName ||
         updatePayload.username !== props.userData.username ||
+        updatePayload.organizationId !== props.userData.organizationId ||
         (!props.isProfileEdit && updatePayload.role !== props.userData.role) ||
         (!props.isProfileEdit && updatePayload.status !== props.userData.status)
 
       if (hasUserChanges) {
-        await organizationStore.updateUser(
-          props.userData.id,
-          updatePayload,
-          organizationId.value
-        )
+        await organizationStore.updateUser(props.userData.id, updatePayload)
       }
 
       message.success(t('notification_component.user_updated'))
@@ -189,7 +213,7 @@ const handleSubmit = async () => {
       updatePayload.password = formState.password
       updatePayload.role = formState.role
       updatePayload.status = formState.status ? 'ACTIVE' : 'INACTIVE'
-      await organizationStore.createUser(updatePayload, organizationId.value)
+      await organizationStore.createUser(updatePayload)
       message.success(t('notification_component.user_created'))
     }
 

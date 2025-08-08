@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onBeforeMount } from 'vue'
+import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import {useUser} from '@/store/user.pinia'
-import {useCore} from '@/store/core.pinia'
+import { useUser } from '@/store/user.pinia'
+import { useCore } from '@/store/core.pinia'
 import SidebarMenuComponent from '@/layouts/components/SidebarMenuComponent.vue'
 import NavbarComponent from '@/layouts/components/NavbarComponent.vue'
 import LoaderMainComponent from '@/components/LoaderMainComponent.vue'
@@ -12,28 +12,33 @@ import dashboardRouter from '@/routers/dashboard.router'
 const corePinia = useCore()
 const { collapsed, lastVisitedRoute } = storeToRefs(corePinia)
 const userStore = useUser()
+const { user, userMe } = storeToRefs(userStore)
 const router = useRouter()
 const route = useRoute()
 
-onBeforeMount(async () => {
-  await new Promise((resolve) => {
-    userStore.getUserMe((userRole: string) => resolve(userRole))
-  })
+watch(
+  () => userMe.value,
+  (isLoading) => {
+    if (
+      !isLoading &&
+      user.value?.role &&
+      (route.path === '/dashboard' || route.name === 'DashboardView')
+    ) {
+      const targetRoute =
+        dashboardRouter.find(
+          (item) =>
+            item.name === lastVisitedRoute.value &&
+            item.meta?.roles?.includes(user.value?.role)
+        ) ||
+        dashboardRouter.find((item) =>
+          item.meta?.roles?.includes(user.value?.role)
+        )
 
-  if (route.path === '/dashboard' || route.name === 'DashboardView') {
-    const targetRoute =
-      dashboardRouter.find(
-        (item) =>
-          item.name === lastVisitedRoute.value &&
-          item.meta?.roles?.includes(userStore.user?.role)
-      ) ||
-      dashboardRouter.find((item) =>
-        item.meta?.roles?.includes(userStore.user?.role)
-      )
-
-    if (targetRoute) router.replace({ name: targetRoute.name })
-  }
-})
+      if (targetRoute) router.replace({ name: targetRoute.name })
+    }
+  },
+  { immediate: true }
+)
 
 router.afterEach((to) => {
   if (to.path.includes('dashboard') && to.name !== 'DashboardView') {
@@ -43,7 +48,7 @@ router.afterEach((to) => {
 </script>
 
 <template>
-  <loader-main-component :loading="userStore.userMe" size="large">
+  <loader-main-component :loading="userMe" size="large">
     <a-layout class="layout-container">
       <a-layout-sider
         :collapsed="collapsed"
